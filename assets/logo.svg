@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="LAVi-SPICA">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="78%">
+      <stop offset="0" stop-color="#213d8d"/>
+      <stop offset="0.55" stop-color="#101f5b"/>
+      <stop offset="1" stop-color="#07101d"/>
+    </radialGradient>
+    <linearGradient id="star" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.45" stop-color="#9ee7ff"/>
+      <stop offset="1" stop-color="#b6a8ff"/>
+    </linearGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="3.2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <circle cx="24" cy="29" r="1.5" fill="#d7f4ff" opacity=".9"/>
+  <circle cx="101" cy="27" r="1.2" fill="#ffffff" opacity=".85"/>
+  <circle cx="109" cy="72" r="1.4" fill="#c4b8ff" opacity=".85"/>
+  <circle cx="31" cy="97" r="1.1" fill="#ffffff" opacity=".7"/>
+  <path d="M28 79 16 64l12-15" fill="none" stroke="#66d9ff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>
+  <path d="m100 49 12 15-12 15" fill="none" stroke="#b7a4ff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>
+  <path d="M64 22c2.5 18 7 22.5 25 25-18 2.5-22.5 7-25 25-2.5-18-7-22.5-25-25 18-2.5 22.5-7 25-25Z" fill="url(#star)" filter="url(#glow)"/>
+  <path d="M42 91c13-7 31-7 44 0" fill="none" stroke="#ffc857" stroke-width="4" stroke-linecap="round" opacity=".95"/>
+  <circle cx="42" cy="91" r="3" fill="#ffc857"/>
+  <circle cx="64" cy="87" r="3" fill="#9ee7ff"/>
+  <circle cx="86" cy="91" r="3" fill="#b6a8ff"/>
+</svg>

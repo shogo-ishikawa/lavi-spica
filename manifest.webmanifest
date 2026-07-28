@@ -1,0 +1,12 @@
+{
+  "name": "LAVi-SPICA — Structured Python Interactive Course and Activities",
+  "short_name": "LAVi-SPICA",
+  "start_url": "./#dashboard",
+  "display": "standalone",
+  "background_color": "#07101d",
+  "theme_color": "#0b1220",
+  "description": "プログラミング初心者向け・ブラウザ完結型Python基礎学習アプリ",
+  "icons": [
+    {"src": "./assets/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}
