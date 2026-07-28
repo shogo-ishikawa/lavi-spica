@@ -1,0 +1,80 @@
+LAVi-SPICA v1.1.0 — release validation
+Generated: 2026-07-28
+
+ARCHIVE
+- File: LAVi-SPICA-v1.1.0.zip
+- ZIP root directory: v1.1.0/
+- Size: 2,224,698 bytes
+- Entries: 51
+- ZIP integrity (unzip -t): PASS
+- Re-extraction: PASS
+- publish-github-https.command executable after re-extraction: PASS
+- SHA-256: 460caad1b2eb7647f553074ee5668c1b071666e174d3ac5415d80e2205669d44
+
+LEARNING CONTENT
+- Sessions: 7
+- Lessons: 23
+- Practice problems: 46
+- After-class questions: 49
+- Instructor-only quiz questions: 98 (14 per session)
+- Detailed self-study guides: 23 / 23 lessons
+- Every self-study guide includes:
+  * two or more explanatory paragraphs
+  * three or more grammar/syntax cards
+  * a line-by-line walkthrough
+  * a small modification task
+  * two or more comprehension checkpoints
+- Practice solution execution and automated checks: 46 / 46 PASS
+- Quiz structural checks and answer-key matching: 98 / 98 PASS
+- Executable quiz output checks: 26 PASS
+- Intentional SyntaxError, NameError, repaired-code, line-count, type, and NumPy-shape cases: PASS
+
+BEGINNER-FRIENDLY EXERCISES
+- Early practice identifiers were checked for unnecessarily long names: PASS
+- Introductory exercises use short names such as w, h, area, id, temp, ok, nums, r, deg, x, n, and count.
+- Exercise titles and contexts were revised to keep tasks small and approachable.
+
+STUDENT / INSTRUCTOR SEPARATION
+- Student navigation contains no quiz or instructor-tool entry: PASS
+- Student learning application imports no quiz bank or answer key: PASS
+- Public quiz directory contains only index.html, quiz.js, and quiz-core.js: PASS
+- Public Git checkout contains neither the 98-question bank nor the answer key: PASS
+- teacher/ contains the local link generator, question bank, answer key, scorer, and guide.
+- teacher/ is excluded by .gitignore and by the GitHub Pages deployment workflow: PASS
+- publish script stops if any teacher/ file is tracked or staged: PASS
+- Day-of quiz links contain only the selected questions and no answers or explanations.
+- Quiz-response question order and fingerprint validation: PASS
+
+PUBLIC DOCUMENTS
+- README is student-facing and includes the approved LAVi-SPICA hero image: PASS
+- SPICA formal name is included: Structured Python Interactive Course and Activities
+- README and student guide contain no release history, update log, source-coverage notes, uploaded-material provenance, or internal discussion: PASS
+- Internal sourceRefs/sourceCoverage and update-date metadata were removed from public learning data: PASS
+- Personal absolute path (/Users/shogo): not present in public files
+
+BROWSER INTERACTION TESTS
+- Student lesson loading and example-to-editor action: PASS
+- Practice page session filter through URL hash: PASS
+- Instructor link generation: PASS
+- Generated link payload decoding and no-answer-field check: PASS
+- Perfect sample-response import and 10/10 scoring: PASS
+- Student quiz start, 10-question rendering, submit, and JSON download: PASS
+- Correct answers are not shown in the student result screen: PASS
+
+PUBLIC-CHECKOUT TEST
+- teacher/ removed to reproduce the Git-tracked checkout
+- npm run verify: PASS
+- Public day-of quiz reader works without a question bank or answer key in the checkout: PASS
+
+GIT HTTPS PREPARATION TEST
+- Fresh git init on main: PASS
+- HTTPS origin registration: PASS
+- Initial commit creation: PASS
+- teacher/ ignored: PASS
+- teacher/ tracked-file count: 0
+- SPICA_PREPARE_ONLY=1 dry run: PASS
+
+LIMITATION OF THIS VALIDATION ENVIRONMENT
+- Browser user-interface behavior was tested in Chromium.
+- Python snippets and solution checks were executed with local Python, NumPy, and Matplotlib.
+- The final browser-side Pyodide download from its external CDN was not executed end-to-end in this restricted environment. The first deployment should therefore be smoke-tested once on the actual classroom network with print(42), one NumPy example, and one Matplotlib example.

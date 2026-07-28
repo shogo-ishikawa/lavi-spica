@@ -38,8 +38,13 @@ jobs:
       - name: Install Node metadata
         run: npm ci --ignore-scripts
 
-      - name: Verify content and solutions
+      - name: Verify public learning content
         run: npm run verify
+
+      - name: Prepare public site
+        run: |
+          mkdir public-site
+          cp -R index.html css js quiz workers assets data sw.js manifest.webmanifest .nojekyll public-site/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -47,7 +52,7 @@ jobs:
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: public-site
 
   deploy:
     environment:

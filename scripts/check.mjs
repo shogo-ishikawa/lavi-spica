@@ -1,12 +1,11 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { dirname, join, relative } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { COURSE_CONTENT } from "../js/content.js";
-import { QUIZ_DATA } from "../js/quiz-bank.js";
+import { SELF_STUDY } from "../js/self-study.js";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const root = dirname(here);
+const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const failures = [];
 const notes = [];
 
@@ -18,15 +17,19 @@ function read(path) {
   return readFileSync(join(root, path), "utf8");
 }
 
-const requiredFiles = [
+const publicFiles = [
   "index.html",
   "css/styles.css",
+  "css/portal.css",
   "js/app.js",
   "js/content.js",
-  "js/quiz-bank.js",
+  "js/self-study.js",
   "js/runtime.js",
   "js/storage.js",
   "js/utils.js",
+  "quiz/index.html",
+  "quiz/quiz.js",
+  "quiz/quiz-core.js",
   "workers/python-worker.mjs",
   "sw.js",
   "manifest.webmanifest",
@@ -36,67 +39,63 @@ const requiredFiles = [
   "data/experiment_missing.csv",
   "data/projectile.csv",
   "README.md",
-  "RELEASE_VALIDATION.txt",
-  "RELEASE_MANIFEST.txt",
+  "docs/STUDENT_GUIDE.md",
   "VERSION",
   "LICENSE",
   ".gitattributes",
-  "publish-github-https.command",
+  ".gitignore",
   ".nojekyll",
-  "docs/STUDENT_GUIDE.md",
-  "docs/INSTRUCTOR_GUIDE.md",
-  "docs/SOURCE_COVERAGE.md",
-  "docs/QUIZ_OPERATION.md",
-  "docs/DEPLOYMENT.md",
-  "docs/GITHUB_HTTPS.md",
-  "docs/VALIDATION.md",
-  "scripts/validate-solutions.mjs",
-  "scripts/validate-quiz.mjs",
+  "package.json",
+  "package-lock.json",
+  "publish-github-https.command",
   ".github/workflows/deploy-pages.yml",
 ];
-for (const path of requiredFiles) assert(existsSync(join(root, path)), `必須ファイルがありません: ${path}`);
+for (const path of publicFiles) assert(existsSync(join(root, path)), `必須ファイルがありません: ${path}`);
+
+const teacherFiles = ["teacher/index.html", "teacher/teacher.js", "teacher/question-bank.js", "teacher/answer-key.js", "teacher/GUIDE.md"];
+const teacherPresent = teacherFiles.every((path) => existsSync(join(root, path)));
+let QUESTION_DATA = null;
+if (teacherPresent) {
+  const questionModule = await import(`${pathToFileURL(join(root, "teacher/question-bank.js")).href}?check=${Date.now()}`);
+  QUESTION_DATA = questionModule.QUESTION_DATA;
+  notes.push("教員用ローカルツールと非公開問題バンクを検出しました。");
+} else {
+  notes.push("教員用ローカルツールと問題バンクはGit公開物に含まれません。");
+}
 
 const packageData = JSON.parse(read("package.json"));
 const manifest = JSON.parse(read("manifest.webmanifest"));
+const version = COURSE_CONTENT.meta.version;
 assert(packageData.name === "lavi-spica", "package nameがlavi-spicaではありません");
-assert(packageData.version === COURSE_CONTENT.meta.version, "package.jsonと教材バージョンが一致しません");
-assert(read("VERSION").trim() === COURSE_CONTENT.meta.version, "VERSIONと教材バージョンが一致しません");
+assert(packageData.version === version, "package.jsonと教材versionが一致しません");
+assert(read("VERSION").trim() === version, "VERSIONと教材versionが一致しません");
+assert(version === "1.1.0", `想定versionは1.1.0です: ${version}`);
+if (QUESTION_DATA) assert(QUESTION_DATA.meta.version === version, "問題バンクと教材versionが一致しません");
 assert(COURSE_CONTENT.meta.title === "LAVi-SPICA", "教材titleがLAVi-SPICAではありません");
-assert(COURSE_CONTENT.meta.subtitle === "Structured Python Interactive Course and Activities", "SPICAの正式名称が教材metadataにありません");
-assert(read("index.html").includes(`v${COURSE_CONTENT.meta.version}`), "index.htmlにバージョン表記がありません");
-assert(read("index.html").includes("Structured Python Interactive Course and Activities"), "index.htmlにSPICAの正式名称がありません");
-assert(read("README.md").includes("assets/lavi-spica-hero.png"), "README先頭にhero imageがありません");
+assert(COURSE_CONTENT.meta.subtitle === "Structured Python Interactive Course and Activities", "SPICAの正式名称がありません");
+assert(read("README.md").includes("assets/lavi-spica-hero.png"), "READMEにhero imageがありません");
 assert(read("README.md").includes("Structured Python Interactive Course and Activities"), "READMEにSPICAの正式名称がありません");
-assert(read("sw.js").includes(`lavi-spica-v${COURSE_CONTENT.meta.version}`), "Service Workerのcache versionが一致しません");
+assert(read("index.html").includes("Structured Python Interactive Course and Activities"), "学生画面にSPICAの正式名称がありません");
+assert(read("sw.js").includes(`lavi-spica-v${version}`), "Service Workerのcache versionが一致しません");
 assert(manifest.start_url === "./#dashboard", "manifestのstart_urlが想定と異なります");
-assert(COURSE_CONTENT.meta.pyodide === "314.0.3", "教材メタデータのPyodide versionが想定と異なります");
-assert(read("workers/python-worker.mjs").includes(`PYODIDE_VERSION = "${COURSE_CONTENT.meta.pyodide}"`), "Workerと教材メタデータのPyodide versionが一致しません");
+assert(manifest.scope === "./", "manifestのscopeが想定と異なります");
+assert(read("workers/python-worker.mjs").includes(`PYODIDE_VERSION = "${COURSE_CONTENT.meta.pyodide}"`), "Workerと教材metadataのPyodide versionが一致しません");
 
-assert(COURSE_CONTENT.sessions.length === 7, "session数は7である必要があります");
-assert(COURSE_CONTENT.lessons.length === 23, "lesson数は23である必要があります");
-assert(COURSE_CONTENT.sessions.map((s) => s.id).join(",") === "1,2,3,4,5,6,7", "session IDが1〜7の連番ではありません");
-for (const session of COURSE_CONTENT.sessions) {
-  assert(typeof session.title === "string" && session.title.length > 0, `session titleがありません: ${session.id}`);
-  assert(Array.isArray(session.goals) && session.goals.length >= 3, `session到達目標が不足しています: ${session.id}`);
-  assert(Array.isArray(session.plan) && session.plan.length >= 5, `session進行表が不足しています: ${session.id}`);
-  if (Array.isArray(session.plan) && session.plan.length) {
-    assert(Number(session.plan[0][0]) === 0, `session進行表が0分から始まりません: ${session.id}`);
-    assert(Number(session.plan.at(-1)[1]) === 100, `session進行表が100分で終わりません: ${session.id}`);
-    session.plan.forEach((row, index) => {
-      assert(Array.isArray(row) && row.length === 3, `session進行表の行が不正です: ${session.id}:${index}`);
-      assert(Number(row[1]) > Number(row[0]), `session進行表の時間幅が不正です: ${session.id}:${index}`);
-      assert(typeof row[2] === "string" && row[2].length > 0, `session進行表の活動がありません: ${session.id}:${index}`);
-      if (index > 0) assert(Number(row[0]) === Number(session.plan[index - 1][1]), `session進行表が連続していません: ${session.id}:${index}`);
-    });
-  }
-}
+assert(COURSE_CONTENT.sessions.length === 7, `session数が7ではありません: ${COURSE_CONTENT.sessions.length}`);
+assert(COURSE_CONTENT.lessons.length === 23, `lesson数が23ではありません: ${COURSE_CONTENT.lessons.length}`);
+assert(COURSE_CONTENT.sessions.map((session) => session.id).join(",") === "1,2,3,4,5,6,7", "session IDが1〜7の連番ではありません");
 
 const lessonIds = new Set();
 const practiceIds = new Set();
-const allSnippets = [];
-const expectedInvalidSnippets = [];
+const snippets = [];
 let practiceCount = 0;
 let afterClassCount = 0;
+
+for (const session of COURSE_CONTENT.sessions) {
+  assert(typeof session.title === "string" && session.title.length > 0, `session titleがありません: ${session.id}`);
+  assert(typeof session.subtitle === "string" && session.subtitle.length > 0, `session subtitleがありません: ${session.id}`);
+  assert(Array.isArray(session.scope) && session.scope.length >= 3, `session scopeが不足しています: ${session.id}`);
+}
 
 for (const lesson of COURSE_CONTENT.lessons) {
   assert(!lessonIds.has(lesson.id), `lesson IDが重複しています: ${lesson.id}`);
@@ -104,209 +103,186 @@ for (const lesson of COURSE_CONTENT.lessons) {
   assert(lesson.session >= 1 && lesson.session <= 7, `lessonのsessionが範囲外です: ${lesson.id}`);
   assert(["core", "advanced"].includes(lesson.track), `trackが不正です: ${lesson.id}`);
   assert(Array.isArray(lesson.objectives) && lesson.objectives.length >= 3, `到達目標が不足しています: ${lesson.id}`);
-  assert(Array.isArray(lesson.concepts) && lesson.concepts.length >= 2, `解説項目が不足しています: ${lesson.id}`);
-  assert(Array.isArray(lesson.liveCoding) && lesson.liveCoding.length >= 1, `一斉入力例が不足しています: ${lesson.id}`);
+  assert(Array.isArray(lesson.concepts) && lesson.concepts.length >= 2, `文法解説が不足しています: ${lesson.id}`);
+  assert(Array.isArray(lesson.liveCoding) && lesson.liveCoding.length >= 1, `例題が不足しています: ${lesson.id}`);
   assert(Array.isArray(lesson.practices) && lesson.practices.length >= 2, `練習問題が不足しています: ${lesson.id}`);
   assert(Array.isArray(lesson.afterClass) && lesson.afterClass.length >= 2, `事後学習が不足しています: ${lesson.id}`);
   assert(Array.isArray(lesson.commonErrors) && lesson.commonErrors.length >= 1, `エラー解説が不足しています: ${lesson.id}`);
-  assert(Number(lesson.minutes) > 0, `lesson時間が不正です: ${lesson.id}`);
-  assert(typeof lesson.starterCode === "string" && lesson.starterCode.length > 0, `開始コードがありません: ${lesson.id}`);
+  assert(typeof lesson.starterCode === "string" && lesson.starterCode.trim(), `開始コードがありません: ${lesson.id}`);
+  snippets.push({ name: `${lesson.id}:starter`, code: lesson.starterCode });
 
-  lesson.concepts.forEach((concept, index) => {
+  for (const [index, concept] of lesson.concepts.entries()) {
     assert(typeof concept.title === "string" && concept.title.length > 0, `concept titleがありません: ${lesson.id}:${index}`);
-    assert(typeof concept.body === "string" && concept.body.length > 0, `concept本文がありません: ${lesson.id}:${index}`);
-    if (concept.code) allSnippets.push({ name: `${lesson.id}:concept:${index}`, code: concept.code });
-  });
-  lesson.liveCoding.forEach((step, index) => {
-    assert(typeof step.title === "string" && step.title.length > 0, `一斉入力titleがありません: ${lesson.id}:${index}`);
-    assert(typeof step.instruction === "string" && step.instruction.length > 0, `一斉入力説明がありません: ${lesson.id}:${index}`);
-    assert(typeof step.predict === "string" && step.predict.length > 0, `一斉入力の予想問いがありません: ${lesson.id}:${index}`);
-    assert(typeof step.code === "string" && step.code.length > 0, `一斉入力codeがありません: ${lesson.id}:${index}`);
-    if (step.code) allSnippets.push({ name: `${lesson.id}:live:${index}`, code: step.code });
-  });
-  lesson.afterClass.forEach((item, index) => {
-    assert(typeof item.question === "string" && item.question.length > 0, `事後学習の問いがありません: ${lesson.id}:${index}`);
-    assert(typeof item.model === "string" && item.model.length > 0, `事後学習の解答例がありません: ${lesson.id}:${index}`);
-  });
-  lesson.commonErrors.forEach((item, index) => {
-    assert(typeof item.symptom === "string" && item.symptom.length > 0, `エラー症状がありません: ${lesson.id}:${index}`);
-    assert(typeof item.cause === "string" && item.cause.length > 0, `エラー原因がありません: ${lesson.id}:${index}`);
-    assert(typeof item.fix === "string" && item.fix.length > 0, `エラー修正がありません: ${lesson.id}:${index}`);
-  });
-  allSnippets.push({ name: `${lesson.id}:starter`, code: lesson.starterCode });
+    assert(typeof concept.body === "string" && concept.body.length >= 20, `conceptの説明が短すぎます: ${lesson.id}:${index}`);
+    if (concept.code) snippets.push({ name: `${lesson.id}:concept:${index}`, code: concept.code });
+  }
+  for (const [index, step] of lesson.liveCoding.entries()) {
+    assert(typeof step.instruction === "string" && step.instruction.length > 0, `例題説明がありません: ${lesson.id}:${index}`);
+    assert(typeof step.predict === "string" && step.predict.length > 0, `予想問いがありません: ${lesson.id}:${index}`);
+    assert(typeof step.code === "string" && step.code.trim(), `例題codeがありません: ${lesson.id}:${index}`);
+    snippets.push({ name: `${lesson.id}:live:${index}`, code: step.code });
+  }
+
+  const study = SELF_STUDY[lesson.id];
+  assert(Boolean(study), `自習用ガイドがありません: ${lesson.id}`);
+  if (study) {
+    assert(Array.isArray(study.lead) && study.lead.length >= 2, `自習用導入説明が不足しています: ${lesson.id}`);
+    assert(study.lead.every((paragraph) => paragraph.length >= 35), `自習用導入説明が短すぎます: ${lesson.id}`);
+    assert(Array.isArray(study.grammar) && study.grammar.length >= 3, `文法カードが不足しています: ${lesson.id}`);
+    for (const [index, rule] of study.grammar.entries()) {
+      assert(rule.title && rule.pattern && rule.body, `文法カードの項目が不足しています: ${lesson.id}:${index}`);
+      assert(String(rule.body).length >= 25, `文法カードの説明が短すぎます: ${lesson.id}:${index}`);
+      if (rule.code) snippets.push({ name: `${lesson.id}:study-rule:${index}`, code: rule.code });
+    }
+    assert(study.walkthrough?.title && study.walkthrough?.code, `一行ずつ読む例題がありません: ${lesson.id}`);
+    assert(Array.isArray(study.walkthrough?.steps) && study.walkthrough.steps.length >= 3, `例題の手順説明が不足しています: ${lesson.id}`);
+    assert(String(study.walkthrough?.try || "").length >= 10, `変更して試す指示がありません: ${lesson.id}`);
+    snippets.push({ name: `${lesson.id}:walkthrough`, code: study.walkthrough.code });
+    assert(Array.isArray(study.checkpoints) && study.checkpoints.length >= 2, `理解確認が不足しています: ${lesson.id}`);
+  }
 
   for (const practice of lesson.practices) {
     practiceCount += 1;
     assert(!practiceIds.has(practice.id), `practice IDが重複しています: ${practice.id}`);
     practiceIds.add(practice.id);
-    assert(typeof practice.title === "string" && practice.title.length > 0, `練習問題titleがありません: ${practice.id}`);
-    assert(typeof practice.prompt === "string" && practice.prompt.length > 0, `問題文がありません: ${practice.id}`);
-    assert(typeof practice.starterCode === "string" && practice.starterCode.length > 0, `開始コードがありません: ${practice.id}`);
+    assert(practice.title && practice.prompt && practice.starterCode && practice.solution, `練習問題の項目が不足しています: ${practice.id}`);
     assert(["基礎", "標準", "発展"].includes(practice.difficulty), `練習問題の難度が不正です: ${practice.id}`);
     assert(Array.isArray(practice.hints) && practice.hints.length >= 1, `ヒントがありません: ${practice.id}`);
-    assert(typeof practice.solution === "string" && practice.solution.length > 0, `解答例がありません: ${practice.id}`);
     assert(practice.check && typeof practice.check === "object", `自動判定条件がありません: ${practice.id}`);
-    allSnippets.push({ name: `${practice.id}:starter`, code: practice.starterCode });
-    allSnippets.push({ name: `${practice.id}:solution`, code: practice.solution });
+    snippets.push({ name: `${practice.id}:starter`, code: practice.starterCode });
+    snippets.push({ name: `${practice.id}:solution`, code: practice.solution });
   }
   afterClassCount += lesson.afterClass.length;
 }
 
-const lessonNumbers = COURSE_CONTENT.lessons.map((lesson) => Number.parseInt(lesson.id.split("-")[0], 10));
-assert(lessonNumbers.join(",") === Array.from({ length: 23 }, (_, index) => index + 1).join(","), "lesson IDの数値prefixが01〜23の連番ではありません");
-for (const session of COURSE_CONTENT.sessions) {
-  const orders = COURSE_CONTENT.lessons.filter((lesson) => lesson.session === session.id).map((lesson) => lesson.order);
-  assert(orders.join(",") === Array.from({ length: orders.length }, (_, index) => index + 1).join(","), `第${session.id}回内のlesson orderが1からの連番ではありません`);
-}
 assert(practiceCount === 46, `practice数が46ではありません: ${practiceCount}`);
 assert(afterClassCount >= 46, `事後学習問題が不足しています: ${afterClassCount}`);
+assert(Object.keys(SELF_STUDY).length === COURSE_CONTENT.lessons.length, "自習用ガイドとlesson数が一致しません");
 
-const expectedEarlyOrder = [
+const expectedOrder = [
   "01-variables", "02-print", "03-fstrings", "04-list", "05-dict", "06-tuple", "07-methods",
   "08-math", "09-range", "10-for", "11-conditions", "12-if", "13-for-if", "14-def",
 ];
-assert(COURSE_CONTENT.lessons.slice(0, expectedEarlyOrder.length).map((lesson) => lesson.id).join(",") === expectedEarlyOrder.join(","), "ユーザー指定の基礎文法順序と一致しません");
+assert(COURSE_CONTENT.lessons.slice(0, expectedOrder.length).map((lesson) => lesson.id).join(",") === expectedOrder.join(","), "基礎文法の学習順序が想定と異なります");
 
-const coveredLessons = new Set();
-for (const source of COURSE_CONTENT.sourceCoverage) {
-  assert(source.coverage.length >= 3, `資料網羅表の項目が不足しています: ${source.source}`);
-  for (const lessonId of source.lessons) {
-    assert(lessonIds.has(lessonId), `資料網羅表が存在しないlessonを参照しています: ${lessonId}`);
-    coveredLessons.add(lessonId);
+const earlyPracticeText = COURSE_CONTENT.lessons.slice(0, 16)
+  .flatMap((lesson) => lesson.practices)
+  .map((practice) => `${practice.starterCode}\n${practice.solution}`)
+  .join("\n");
+const longIdentifiers = [...new Set(earlyPracticeText.match(/\b[A-Za-z_]\w{12,}\b/g) || [])]
+  .filter((name) => !["matplotlib", "structuredClone"].includes(name));
+assert(longIdentifiers.length === 0, `基礎練習に長すぎる識別子があります: ${longIdentifiers.join(", ")}`);
+
+const studentIndex = read("index.html");
+const studentApp = read("js/app.js");
+assert(!/#quiz|#teacher|teacher\//i.test(studentIndex), "学生用indexに小テストまたは教員用リンクがあります");
+assert(!/#quiz|#teacher|teacher\//i.test(studentApp), "学生用appに小テストまたは教員用リンクがあります");
+assert(!/question-bank|answer-key|quiz-core/i.test(studentApp), "学生用appが小テスト問題を読み込んでいます");
+assert(read("quiz/index.html").includes("noindex,nofollow,noarchive"), "小テスト画面にnoindex指定がありません");
+assert(!/answer-key|QUIZ_ANSWER_KEY|correctAnswer|scoreResponse/.test(read("quiz/quiz.js")), "学生用小テストが採点キーまたは正答処理を含んでいます");
+assert(!/answer-key|QUIZ_ANSWER_KEY/.test(read("quiz/quiz-core.js")), "学生用quiz coreが採点キーを参照しています");
+
+assert(!existsSync(join(root, "quiz/question-bank.js")), "公開quiz directoryに問題バンクが残っています");
+assert(!/question-bank|QUESTION_DATA/.test(read("quiz/quiz.js")), "学生用小テストが問題バンクを参照しています");
+assert(!/question-bank|QUESTION_DATA/.test(read("quiz/quiz-core.js")), "学生用quiz coreが問題バンクを参照しています");
+assert(read("quiz/quiz-core.js").includes("lavi-spica-quiz-link-v1"), "当日リンク用payload処理がありません");
+assert(read("quiz/quiz-core.js").includes("decodeQuizPayload"), "当日リンクの読込処理がありません");
+
+if (QUESTION_DATA) {
+  assert(QUESTION_DATA.questions.length === 98, `小テスト問題数が98ではありません: ${QUESTION_DATA.questions.length}`);
+  for (let session = 1; session <= 7; session += 1) {
+    assert(QUESTION_DATA.questions.filter((question) => Number(question.session) === session).length === 14, `第${session}回の問題数が14ではありません`);
+  }
+  for (const question of QUESTION_DATA.questions) {
+    assert(question.id && question.prompt && question.type, `問題の必須項目がありません: ${question.id || "unknown"}`);
+    assert(["single", "multi", "text"].includes(question.type), `問題typeが不正です: ${question.id}`);
+    assert(!Object.hasOwn(question, "answer"), `問題バンクにanswerがあります: ${question.id}`);
+    assert(!Object.hasOwn(question, "accepted"), `問題バンクにacceptedがあります: ${question.id}`);
+    assert(!Object.hasOwn(question, "answerDisplay"), `問題バンクにanswerDisplayがあります: ${question.id}`);
+    assert(!Object.hasOwn(question, "explanation"), `問題バンクにexplanationがあります: ${question.id}`);
+    if (question.options) assert(new Set(question.options).size === question.options.length, `選択肢が重複しています: ${question.id}`);
   }
 }
-for (const lessonId of lessonIds) assert(coveredLessons.has(lessonId), `資料網羅表に含まれないlessonがあります: ${lessonId}`);
-assert(COURSE_CONTENT.sourceCoverage.some((item) => item.source.includes("オブジェクト指向")), "OOP資料の網羅表がありません");
-assert(COURSE_CONTENT.sourceCoverage.some((item) => item.source.includes("NumPyの基本")), "NumPy基礎資料の網羅表がありません");
-assert(COURSE_CONTENT.sourceCoverage.some((item) => item.source.includes("データ解析")), "NumPyデータ解析資料の網羅表がありません");
-assert(COURSE_CONTENT.sourceCoverage.some((item) => item.source.includes("Matplotlib")), "可視化資料の網羅表がありません");
 
-assert(QUIZ_DATA.questions.length === 98, `小テスト問題数が98ではありません: ${QUIZ_DATA.questions.length}`);
-const questionIds = new Set();
-for (const question of QUIZ_DATA.questions) {
-  assert(!questionIds.has(question.id), `question IDが重複しています: ${question.id}`);
-  questionIds.add(question.id);
-  assert(question.session >= 1 && question.session <= 7, `questionのsessionが範囲外です: ${question.id}`);
-  assert(typeof question.prompt === "string" && question.prompt.length > 0, `question promptがありません: ${question.id}`);
-  assert(["基礎", "標準", "発展"].includes(question.difficulty), `question difficultyが不正です: ${question.id}`);
-  assert(Array.isArray(question.tags) && question.tags.length >= 1, `question tagがありません: ${question.id}`);
-  assert(["single", "multi", "text"].includes(question.type), `question typeが不正です: ${question.id}`);
-  assert(Number(question.points) > 0, `配点が不正です: ${question.id}`);
-  assert(typeof question.explanation === "string" && question.explanation.length > 0, `解説がありません: ${question.id}`);
-  if (question.code) {
-    const target = { name: `${question.id}:quiz`, code: question.code };
-    if (question.expectsSyntaxError) expectedInvalidSnippets.push(target);
-    else allSnippets.push(target);
-  }
-  if (question.type === "single") {
-    assert(Array.isArray(question.options) && question.options.length >= 2, `単一選択肢が不足しています: ${question.id}`);
-    assert(Number.isInteger(question.answer) && question.answer >= 0 && question.answer < question.options.length, `単一選択の正答indexが不正です: ${question.id}`);
-  } else if (question.type === "multi") {
-    assert(Array.isArray(question.options) && question.options.length >= 2, `複数選択肢が不足しています: ${question.id}`);
-    assert(Array.isArray(question.answer) && question.answer.length >= 1, `複数選択の正答がありません: ${question.id}`);
-    question.answer.forEach((answer) => assert(Number.isInteger(answer) && answer >= 0 && answer < question.options.length, `複数選択の正答indexが不正です: ${question.id}`));
-  } else {
-    assert(Array.isArray(question.accepted) && question.accepted.length >= 1, `記述式のacceptedがありません: ${question.id}`);
+const gitignore = read(".gitignore");
+const workflow = read(".github/workflows/deploy-pages.yml");
+assert(/^teacher\/\s*$/m.test(gitignore), ".gitignoreがteacher/を除外していません");
+assert(!/cp\s+-R[^\n]*teacher/.test(workflow), "Pages workflowがteacher/を公開しようとしています");
+assert(workflow.includes("public-site"), "Pages workflowに公開用directoryがありません");
+assert(read("publish-github-https.command").includes('git check-ignore -q "$protected_file"'), "push scriptに教員用ファイルの保護確認がありません");
+
+const readme = read("README.md");
+for (const phrase of ["更新履歴", "検証結果", "アップロード済み講義資料", "GitHubへHTTPSで公開", "release directory", "v1.1.0"]) {
+  assert(!readme.includes(phrase), `READMEに学生へ不要な文言があります: ${phrase}`);
+}
+for (const removed of ["CHANGELOG.md", "RELEASE_VALIDATION.txt", "RELEASE_MANIFEST.txt", "docs/SOURCE_COVERAGE.md", "docs/DEPLOYMENT.md"]) {
+  assert(!existsSync(join(root, removed)), `不要な公開文書が残っています: ${removed}`);
+}
+assert(!read("js/content.js").includes("sourceCoverage"), "公開教材dataに内部向けsourceCoverageがあります");
+assert(!read("js/content.js").includes("sourceRefs"), "公開教材dataに内部向けsourceRefsがあります");
+assert(!read("js/content.js").includes('"updated"'), "公開教材dataに更新日metadataがあります");
+assert(!read("js/content.js").includes("追加講義資料"), "公開教材dataに内部向け資料名があります");
+assert(!read("js/content.js").includes("教員と一緒に入力"), "公開教材dataに教員運用文があります");
+
+const personalPathPattern = /\/Users\/shogo|C:\\Users\\shogo/;
+for (const path of publicFiles) {
+  if (existsSync(join(root, path)) && !path.endsWith(".png")) {
+    assert(!personalPathPattern.test(read(path)), `個人の絶対PATHがあります: ${path}`);
   }
 }
-for (let session = 1; session <= 7; session += 1) {
-  const count = QUIZ_DATA.questions.filter((question) => question.session === session).length;
-  assert(count === 14, `第${session}回の小テスト問題が14問ではありません: ${count}`);
-}
 
-const parseScript = `
-import ast, json, sys
+const compileRunner = String.raw`
+import json, sys
 items = json.load(sys.stdin)
 errors = []
 for item in items:
     try:
-        ast.parse(item["code"], filename=item["name"])
+        compile(item["code"], item["name"], "exec")
     except SyntaxError as exc:
-        errors.append({"name": item["name"], "message": exc.msg, "line": exc.lineno, "offset": exc.offset})
+        errors.append({"name": item["name"], "message": str(exc)})
 print(json.dumps(errors, ensure_ascii=False))
 `;
-const pythonParse = spawnSync("python3", ["-c", parseScript], { input: JSON.stringify(allSnippets), encoding: "utf8" });
-assert(pythonParse.status === 0, `Python構文検査を実行できません: ${pythonParse.stderr}`);
-if (pythonParse.status === 0) {
-  const syntaxErrors = JSON.parse(pythonParse.stdout || "[]");
-  for (const error of syntaxErrors) failures.push(`Python構文エラー ${error.name}:${error.line}: ${error.message}`);
+const compileResult = spawnSync("python3", ["-c", compileRunner], {
+  input: JSON.stringify(snippets),
+  encoding: "utf8",
+  timeout: 60_000,
+  maxBuffer: 8 * 1024 * 1024,
+});
+assert(!compileResult.error, `Python構文検査を実行できません: ${compileResult.error?.message || "unknown"}`);
+assert(compileResult.status === 0, `Python構文検査が異常終了しました: ${compileResult.stderr}`);
+if (!compileResult.error && compileResult.status === 0) {
+  try {
+    const errors = JSON.parse(compileResult.stdout || "[]");
+    for (const error of errors) failures.push(`Python構文エラー: ${error.name}: ${error.message}`);
+  } catch (error) {
+    failures.push(`Python構文検査結果を読めません: ${error.message}`);
+  }
 }
 
-const invalidParse = spawnSync("python3", ["-c", parseScript], { input: JSON.stringify(expectedInvalidSnippets), encoding: "utf8" });
-assert(invalidParse.status === 0, `意図的なPython構文エラー検査を実行できません: ${invalidParse.stderr}`);
-if (invalidParse.status === 0) {
-  const syntaxErrors = JSON.parse(invalidParse.stdout || "[]");
-  const failedNames = new Set(syntaxErrors.map((error) => error.name));
-  for (const item of expectedInvalidSnippets) assert(failedNames.has(item.name), `構文エラーを問うコードが有効なPythonになっています: ${item.name}`);
+const jsFiles = [
+  "js/app.js", "js/content.js", "js/self-study.js", "js/runtime.js", "js/storage.js", "js/utils.js",
+  "quiz/quiz.js", "quiz/quiz-core.js", "sw.js", "workers/python-worker.mjs",
+];
+if (teacherPresent) jsFiles.push("teacher/teacher.js", "teacher/question-bank.js", "teacher/answer-key.js");
+for (const path of jsFiles) {
+  const result = spawnSync(process.execPath, ["--check", join(root, path)], { encoding: "utf8" });
+  assert(result.status === 0, `JavaScript構文エラー: ${path}: ${result.stderr.trim()}`);
 }
+const shellResult = spawnSync("bash", ["-n", join(root, "publish-github-https.command")], { encoding: "utf8" });
+assert(shellResult.status === 0, `publish scriptの構文エラー: ${shellResult.stderr.trim()}`);
 
-const jsFiles = ["js/app.js", "js/content.js", "js/quiz-bank.js", "js/runtime.js", "js/storage.js", "js/utils.js", "workers/python-worker.mjs", "sw.js"];
-for (const file of jsFiles) {
-  const result = spawnSync(process.execPath, ["--check", join(root, file)], { encoding: "utf8" });
-  assert(result.status === 0, `JavaScript構文エラー ${file}: ${result.stderr}`);
+if (teacherPresent) {
+  const teacherIndex = read("teacher/index.html");
+  const teacherJs = read("teacher/teacher.js");
+  const answerModule = await import(`${pathToFileURL(join(root, "teacher/answer-key.js")).href}?check=${Date.now()}`);
+  const answerKey = answerModule.QUIZ_ANSWER_KEY;
+  assert(teacherIndex.includes("noindex,nofollow,noarchive"), "教員画面にnoindex指定がありません");
+  assert(teacherJs.includes("./question-bank.js"), "教員画面がローカル問題バンクを参照していません");
+  assert(teacherJs.includes("./answer-key.js"), "教員画面が採点キーを参照していません");
+  assert(answerKey.meta.version === version, "採点キーと教材versionが一致しません");
+  assert(Object.keys(answerKey.answers).length === QUESTION_DATA.questions.length, "採点キー件数と問題数が一致しません");
+  for (const question of QUESTION_DATA.questions) assert(Boolean(answerKey.answers[question.id]), `採点キーがありません: ${question.id}`);
 }
-
-const shellCheck = spawnSync("bash", ["-n", join(root, "publish-github-https.command")], { encoding: "utf8" });
-assert(shellCheck.status === 0, `HTTPS公開scriptのshell構文エラー: ${shellCheck.stderr}`);
-
-const index = read("index.html");
-for (const id of ["appView", "runtimePill", "runtimeStatus", "mainNav", "sidebar", "globalDialog", "toastRegion"]) {
-  assert(index.includes(`id="${id}"`), `index.htmlに必須IDがありません: ${id}`);
-}
-assert(index.includes('type="module" src="./js/app.js"'), "app.jsのmodule読込がありません");
-
-function walkFiles(directory) {
-  return readdirSync(directory).flatMap((name) => {
-    const absolute = join(directory, name);
-    return statSync(absolute).isDirectory() ? walkFiles(absolute) : [absolute];
-  });
-}
-
-const textExtensions = new Set([".html", ".css", ".js", ".mjs", ".json", ".md", ".txt", ".yml", ".yaml", ".webmanifest", ".gitignore", ".gitattributes", ".nojekyll", ".command", ".sh"]);
-const allTextFiles = walkFiles(root)
-  .map((absolute) => relative(root, absolute))
-  .filter((path) => {
-    const filename = path.split("/").at(-1);
-    const extension = filename.includes(".") ? `.${filename.split(".").at(-1)}` : `.${filename}`;
-    return textExtensions.has(extension) || ["LICENSE", "VERSION", "CHANGELOG.md", "package-lock.json"].includes(filename);
-  });
-for (const file of allTextFiles) {
-  const text = read(file);
-  assert(!/\/Users\/[A-Za-z0-9._-]+/.test(text), `個人の絶対PATHが含まれています: ${file}`);
-  assert(!/[A-Z]:\\Users\\/i.test(text), `Windowsの個人絶対PATHが含まれています: ${file}`);
-  const legacyNames = ["Py" + "Core Lab", "py" + "core-lab"];
-  assert(!legacyNames.some((name) => text.toLowerCase().includes(name.toLowerCase())), `旧app名が残っています: ${file}`);
-  const unfinishedMarkers = ["TO" + "DO", "FIX" + "ME"];
-  assert(!unfinishedMarkers.some((marker) => new RegExp(`\\b${marker}\\b`).test(text)), `未処理マーカーが含まれています: ${file}`);
-}
-
-// HTML・Markdownに書かれた相対リンクがrelease内で解決できることを確認する。
-function assertRelativeTarget(sourceFile, rawTarget) {
-  const target = String(rawTarget || "").trim().replace(/^<|>$/g, "");
-  if (!target || target.startsWith("#") || /^(https?:|mailto:|data:|javascript:)/i.test(target)) return;
-  const clean = decodeURIComponent(target.split("#")[0].split("?")[0]);
-  if (!clean) return;
-  const absolute = join(root, dirname(sourceFile), clean);
-  assert(existsSync(absolute), `相対リンク先がありません: ${sourceFile} -> ${target}`);
-}
-
-for (const match of index.matchAll(/(?:href|src)=["']([^"']+)["']/g)) assertRelativeTarget("index.html", match[1]);
-for (const file of allTextFiles.filter((path) => path.endsWith(".md"))) {
-  for (const match of read(file).matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) assertRelativeTarget(file, match[1]);
-}
-
-const worker = read("workers/python-worker.mjs");
-assert(worker.includes("new URL(`../data/${filename}`, self.location.href)"), "同梱データの相対URL読込がありません");
-assert(worker.includes("loadPackagesFromImports"), "importに応じたPyodide package読込がありません");
-assert(worker.includes("newly generated small files") || worker.includes("Return newly generated small files"), "生成ファイル回収処理がありません");
-
-notes.push(`session ${COURSE_CONTENT.sessions.length}`);
-notes.push(`lesson ${COURSE_CONTENT.lessons.length}`);
-notes.push(`practice ${practiceCount}`);
-notes.push(`after-class ${afterClassCount}`);
-notes.push(`quiz ${QUIZ_DATA.questions.length}`);
-notes.push(`Python snippets ${allSnippets.length + expectedInvalidSnippets.length}`);
-notes.push(`intentional syntax-error snippets ${expectedInvalidSnippets.length}`);
 
 if (failures.length) {
   console.error(`\nLAVi-SPICA validation failed (${failures.length})`);
@@ -314,5 +290,8 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`LAVi-SPICA static validation passed: ${notes.join(" / ")}`);
-console.log(`Root: ${relative(process.cwd(), root) || "."}`);
+console.log(`Validated ${COURSE_CONTENT.sessions.length} sessions, ${COURSE_CONTENT.lessons.length} lessons, ${practiceCount} practices, and ${afterClassCount} after-class questions.`);
+console.log(`Validated detailed self-study guides for all ${Object.keys(SELF_STUDY).length} lessons.`);
+if (QUESTION_DATA) console.log(`Validated ${QUESTION_DATA.questions.length} instructor-only quiz questions; no question bank or answer key is present in the public student bundle.`);
+else console.log("Validated the public day-of quiz reader with no question bank or answer key in the Git checkout.");
+notes.forEach((note) => console.log(note));

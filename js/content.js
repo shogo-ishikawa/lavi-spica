@@ -2,10 +2,9 @@ export const COURSE_CONTENT = {
   "meta": {
     "title": "LAVi-SPICA",
     "subtitle": "Structured Python Interactive Course and Activities",
-    "tagline": "Python基礎から計算科学へ",
-    "version": "1.0.0",
-    "updated": "2026-07-28",
-    "audience": "日本大学生産工学部『計算科学基礎』・プログラミング初学者",
+    "tagline": "変数から可視化まで、書いて試せるPython基礎学習",
+    "version": "1.1.0",
+    "audience": "プログラミングを初めて学ぶ大学生",
     "pyodide": "314.0.3"
   },
   "sessions": [
@@ -21,44 +20,6 @@ export const COURSE_CONTENT = {
         "print",
         "f-string",
         "コメント"
-      ],
-      "goals": [
-        "数値・文字列・真偽値を変数へ代入できる",
-        "変数名を読み手に意味が伝わるように付けられる",
-        "print()とf-stringで値・単位・説明を一緒に表示できる",
-        "実行前に出力を予想し、結果と照合できる"
-      ],
-      "plan": [
-        [
-          0,
-          20,
-          "前回範囲の小テスト（初回は診断テスト）"
-        ],
-        [
-          20,
-          30,
-          "前回の誤答共有と本日の到達目標"
-        ],
-        [
-          30,
-          55,
-          "教員と一緒に入力：変数・計算・print"
-        ],
-        [
-          55,
-          75,
-          "教員と一緒に入力：f-stringと書式指定"
-        ],
-        [
-          75,
-          92,
-          "練習問題：単位換算と自己紹介カード"
-        ],
-        [
-          92,
-          100,
-          "Exit Ticketと事後学習の確認"
-        ]
       ]
     },
     {
@@ -75,49 +36,6 @@ export const COURSE_CONTENT = {
         "tuple",
         "len",
         "method"
-      ],
-      "goals": [
-        "list・dict・tupleの役割の違いを説明できる",
-        "インデックスとスライスで必要な要素を取り出せる",
-        "append()や辞書の代入でデータを更新できる",
-        "関数とメソッドの呼び方の違いを見分けられる"
-      ],
-      "plan": [
-        [
-          0,
-          20,
-          "第1回範囲の小テスト"
-        ],
-        [
-          20,
-          30,
-          "誤答を用いたprint・f-string復習"
-        ],
-        [
-          30,
-          52,
-          "list：作成・参照・更新・スライス"
-        ],
-        [
-          52,
-          70,
-          "dict：キーと値で意味を保つ"
-        ],
-        [
-          70,
-          82,
-          "tuple：変更しない組とアンパック"
-        ],
-        [
-          82,
-          96,
-          "練習問題：実験記録をデータ構造で表す"
-        ],
-        [
-          96,
-          100,
-          "Exit Ticket"
-        ]
       ]
     },
     {
@@ -134,49 +52,6 @@ export const COURSE_CONTENT = {
         "range",
         "for",
         "indent"
-      ],
-      "goals": [
-        "mathライブラリをimportし、数学関数を利用できる",
-        "range()が作る整数列を説明できる",
-        "for文で同じ処理を指定回数繰り返せる",
-        "ループ変数を数式へ組み込み、表を作れる"
-      ],
-      "plan": [
-        [
-          0,
-          20,
-          "第2回範囲の小テスト"
-        ],
-        [
-          20,
-          30,
-          "コンテナ型の使い分けを確認"
-        ],
-        [
-          30,
-          48,
-          "math：平方根・円周率・三角関数"
-        ],
-        [
-          48,
-          62,
-          "range：開始・終了・刻み幅"
-        ],
-        [
-          62,
-          82,
-          "for：インデントとループ変数"
-        ],
-        [
-          82,
-          96,
-          "練習問題：角度とsinの表／等加速度運動"
-        ],
-        [
-          96,
-          100,
-          "Exit Ticket"
-        ]
       ]
     },
     {
@@ -194,49 +69,6 @@ export const COURSE_CONTENT = {
         "not",
         "modulo",
         "for-if"
-      ],
-      "goals": [
-        "比較式がTrueまたはFalseを返すことを説明できる",
-        "if・elif・elseで相互排他的な処理を記述できる",
-        "and・or・notで条件を組み合わせられる",
-        "forとifを組み合わせてデータを抽出・分類できる"
-      ],
-      "plan": [
-        [
-          0,
-          20,
-          "第3回範囲の小テスト"
-        ],
-        [
-          20,
-          30,
-          "rangeとforの誤答確認"
-        ],
-        [
-          30,
-          48,
-          "比較式・bool・条件の真偽"
-        ],
-        [
-          48,
-          66,
-          "if・elif・elseとインデント"
-        ],
-        [
-          66,
-          80,
-          "and・or・not、境界値"
-        ],
-        [
-          80,
-          96,
-          "練習問題：測定値の判定と偶数抽出"
-        ],
-        [
-          96,
-          100,
-          "Exit Ticket"
-        ]
       ]
     },
     {
@@ -252,49 +84,6 @@ export const COURSE_CONTENT = {
         "call",
         "traceback",
         "debug"
-      ],
-      "goals": [
-        "defで引数を受け取る関数を定義できる",
-        "printとreturnの違いを説明できる",
-        "大きな処理を小さな関数へ分割できる",
-        "エラー名・行番号・直前の値から修正方針を立てられる"
-      ],
-      "plan": [
-        [
-          0,
-          20,
-          "第4回範囲の小テスト"
-        ],
-        [
-          20,
-          30,
-          "条件分岐の境界値を確認"
-        ],
-        [
-          30,
-          50,
-          "def・引数・関数呼び出し"
-        ],
-        [
-          50,
-          66,
-          "returnとローカル変数"
-        ],
-        [
-          66,
-          80,
-          "小さな関数への分解"
-        ],
-        [
-          80,
-          96,
-          "練習問題：単位換算関数とエラー修正"
-        ],
-        [
-          96,
-          100,
-          "Exit Ticket"
-        ]
       ]
     },
     {
@@ -311,49 +100,6 @@ export const COURSE_CONTENT = {
         "NumPy",
         "ndarray",
         "vectorization"
-      ],
-      "goals": [
-        "変数がオブジェクトへの参照として働くことを概念的に説明できる",
-        "値・型・属性・メソッドの関係を見分けられる",
-        "NumPy配列を生成し、shapeとdtypeを確認できる",
-        "listのforループと配列のベクトル化演算を比較できる"
-      ],
-      "plan": [
-        [
-          0,
-          20,
-          "第5回範囲の小テスト"
-        ],
-        [
-          20,
-          34,
-          "変数・参照・オブジェクトの概念"
-        ],
-        [
-          34,
-          48,
-          "属性・メソッド・classとinstance"
-        ],
-        [
-          48,
-          62,
-          "listとNumPy配列の違い"
-        ],
-        [
-          62,
-          78,
-          "array・arange・linspace・shape・dtype"
-        ],
-        [
-          78,
-          96,
-          "練習問題：ベクトル化・集約・条件抽出"
-        ],
-        [
-          96,
-          100,
-          "Exit Ticket"
-        ]
       ]
     },
     {
@@ -372,49 +118,6 @@ export const COURSE_CONTENT = {
         "scatter",
         "hist",
         "label"
-      ],
-      "goals": [
-        "CSVを読み込み、shape・dtype・先頭行を必ず確認できる",
-        "列抽出・欠損値処理・集計を行える",
-        "折れ線・散布図・ヒストグラムを目的に応じて選べる",
-        "軸ラベル・単位・凡例・タイトルを備えた図を作れる"
-      ],
-      "plan": [
-        [
-          0,
-          20,
-          "第6回範囲の小テスト"
-        ],
-        [
-          20,
-          32,
-          "データ解析の手順：読む→覗く→整える→計算"
-        ],
-        [
-          32,
-          50,
-          "loadtxt・genfromtxt・列抽出・NaN"
-        ],
-        [
-          50,
-          64,
-          "保存形式：CSV・npy・npzと精度"
-        ],
-        [
-          64,
-          82,
-          "Matplotlib：plot・scatter・hist"
-        ],
-        [
-          82,
-          96,
-          "練習問題：実験データを解析し図にする"
-        ],
-        [
-          96,
-          100,
-          "Exit Ticketと基礎文法総復習"
-        ]
       ]
     }
   ],
@@ -478,19 +181,19 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "01-p1",
-          "title": "長方形の面積",
-          "prompt": "width_m=3.2、height_m=1.5を使い、area_m2を計算して表示してください。",
-          "starterCode": "width_m = 3.2\nheight_m = 1.5\n# area_m2を計算\n",
+          "title": "宇宙船の窓の面積",
+          "prompt": "幅 w=3.2、高さ h=1.5 の長方形について、area を計算して表示しましょう。",
+          "starterCode": "w = 3.2\nh = 1.5\n# areaを計算\n",
           "hints": [
-            "面積は幅×高さです。",
-            "最後にprint(area_m2)を書きます。"
+            "面積は「幅 × 高さ」です。",
+            "area = w * h の後にprint()を使います。"
           ],
-          "solution": "width_m = 3.2\nheight_m = 1.5\narea_m2 = width_m * height_m\nprint(area_m2)\n",
+          "solution": "w = 3.2\nh = 1.5\narea = w * h\nprint(area)\n",
           "check": {
             "numericOutput": 4.8,
             "tolerance": 1e-12,
             "required": [
-              "area_m2",
+              "area",
               "print"
             ]
           },
@@ -498,14 +201,14 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "01-p2",
-          "title": "型を見分ける",
-          "prompt": "4つの変数の型をtype()で順番に表示してください。",
-          "starterCode": "sample_id = 12\nmass_g = 2.5\nmaterial = \"Al\"\nis_measured = True\n",
+          "title": "4種類の値を観察",
+          "prompt": "n、mass、metal、ok の型を、上から順に type() で表示しましょう。",
+          "starterCode": "n = 12\nmass = 2.5\nmetal = \"Al\"\nok = True\n",
           "hints": [
-            "type(変数名)で型を得られます。",
-            "print(type(sample_id))の形を4回使えます。"
+            "type(n)のように、値ではなく変数をtype()へ渡します。",
+            "4行のprint()に分けると確認しやすくなります。"
           ],
-          "solution": "sample_id = 12\nmass_g = 2.5\nmaterial = \"Al\"\nis_measured = True\nprint(type(sample_id))\nprint(type(mass_g))\nprint(type(material))\nprint(type(is_measured))\n",
+          "solution": "n = 12\nmass = 2.5\nmetal = \"Al\"\nok = True\nprint(type(n))\nprint(type(mass))\nprint(type(metal))\nprint(type(ok))\n",
           "check": {
             "outputContains": [
               "int",
@@ -545,10 +248,6 @@ export const COURSE_CONTENT = {
           "cause": "変数名を数字から始めた",
           "fix": "sample_1のように英字または_から始める"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法",
-        "オブジェクト指向資料1章への導入"
       ]
     },
     {
@@ -608,14 +307,14 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "02-p1",
-          "title": "測定記録を1行で表示",
-          "prompt": "sample_id、temperature_c、is_validを、ラベル付きで1行に表示してください。",
-          "starterCode": "sample_id = 7\ntemperature_c = 24.8\nis_valid = True\n",
+          "title": "星の観測メモを1行で表示",
+          "prompt": "id、temp、ok を、意味が分かるラベルと一緒に1行で表示しましょう。",
+          "starterCode": "id = 7\ntemp = 24.8\nok = True\n",
           "hints": [
-            "print()には複数の引数を渡せます。",
-            "例：print(\"試料:\", sample_id, ...)"
+            "print()には文字列と変数をカンマで並べられます。",
+            "例：print(\"ID:\", id, ...)。"
           ],
-          "solution": "sample_id = 7\ntemperature_c = 24.8\nis_valid = True\nprint(\"試料:\", sample_id, \"温度 [degC]:\", temperature_c, \"有効:\", is_valid)\n",
+          "solution": "id = 7\ntemp = 24.8\nok = True\nprint(\"ID:\", id, \"温度:\", temp, \"有効:\", ok)\n",
           "check": {
             "outputContains": [
               "7",
@@ -630,13 +329,13 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "02-p2",
-          "title": "日付を整形",
-          "prompt": "year、month、dayを2026/7/28の形で表示してください。sepを使います。",
-          "starterCode": "year = 2026\nmonth = 7\nday = 28\n",
+          "title": "日付をすっきり表示",
+          "prompt": "y、m、d を 2026/7/28 の形で表示しましょう。sep=\"/\" を使います。",
+          "starterCode": "y = 2026\nm = 7\nd = 28\n",
           "hints": [
-            "print(year, month, day, sep=\"/\")です。"
+            "print(y, m, d, sep=\"/\") の形を使えます。"
           ],
-          "solution": "year = 2026\nmonth = 7\nday = 28\nprint(year, month, day, sep=\"/\")\n",
+          "solution": "y = 2026\nm = 7\nd = 28\nprint(y, m, d, sep=\"/\")\n",
           "check": {
             "outputEquals": "2026/7/28",
             "required": [
@@ -662,9 +361,6 @@ export const COURSE_CONTENT = {
           "cause": "開始と終了の引用符が揃っていない",
           "fix": "半角の'...'または\"...\"で対にする"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法"
       ]
     },
     {
@@ -724,14 +420,13 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "03-p1",
-          "title": "温度レポート",
-          "prompt": "温度23.4567を『温度: 23.46 degC』と表示してください。",
-          "starterCode": "temperature_c = 23.4567\n",
+          "title": "温度を見やすく丸める",
+          "prompt": "temp=23.4567 を「温度: 23.46 degC」と表示しましょう。",
+          "starterCode": "temp = 23.4567\n",
           "hints": [
-            "f文字列を使います。",
-            "{temperature_c:.2f}です。"
+            "f-stringの中で {temp:.2f} と書きます。"
           ],
-          "solution": "temperature_c = 23.4567\nprint(f\"温度: {temperature_c:.2f} degC\")\n",
+          "solution": "temp = 23.4567\nprint(f\"温度: {temp:.2f} degC\")\n",
           "check": {
             "outputEquals": "温度: 23.46 degC",
             "required": [
@@ -743,13 +438,13 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "03-p2",
-          "title": "達成率",
-          "prompt": "completed=17、total=20から、達成率を『85.0%』の形で表示してください。",
-          "starterCode": "completed = 17\ntotal = 20\nratio = completed / total\n",
+          "title": "ミッション達成率",
+          "prompt": "done=17、total=20 から rate を求め、「達成率: 85.0%」と表示しましょう。",
+          "starterCode": "done = 17\ntotal = 20\nrate = done / total\n",
           "hints": [
-            "割合の書式は:.1%です。"
+            "割合の表示には {rate:.1%} を使えます。"
           ],
-          "solution": "completed = 17\ntotal = 20\nratio = completed / total\nprint(f\"達成率: {ratio:.1%}\")\n",
+          "solution": "done = 17\ntotal = 20\nrate = done / total\nprint(f\"達成率: {rate:.1%}\")\n",
           "check": {
             "outputContains": [
               "85.0%"
@@ -782,9 +477,6 @@ export const COURSE_CONTENT = {
           "cause": "文字列へ数値用のf書式を使った",
           "fix": "変数の型をtype()で確認する"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法"
       ]
     },
     {
@@ -845,13 +537,14 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "04-p1",
-          "title": "中央3点を取り出す",
-          "prompt": "values=[5,8,13,21,34]から8,13,21をスライスで取り出して表示してください。",
-          "starterCode": "values = [5, 8, 13, 21, 34]\n",
+          "title": "真ん中の3個を取り出す",
+          "prompt": "nums=[5, 8, 13, 21, 34] から、8、13、21 をスライスで取り出して表示しましょう。",
+          "starterCode": "nums = [5, 8, 13, 21, 34]\n",
           "hints": [
-            "位置1から位置4の直前までです。"
+            "8はインデックス1、21はインデックス3です。",
+            "終了位置は含まれないため、stopには4を書きます。"
           ],
-          "solution": "values = [5, 8, 13, 21, 34]\nmiddle = values[1:4]\nprint(middle)\n",
+          "solution": "nums = [5, 8, 13, 21, 34]\nmid = nums[1:4]\nprint(mid)\n",
           "check": {
             "outputEquals": "[8, 13, 21]",
             "required": [
@@ -862,14 +555,14 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "04-p2",
-          "title": "観測値を修正",
-          "prompt": "3番目の99.0を9.9へ修正し、10.1を末尾へ追加してください。",
-          "starterCode": "observations = [9.8, 10.0, 99.0]\n",
+          "title": "まちがった値を直す",
+          "prompt": "vals の3番目にある99.0を9.9へ直し、10.1を末尾へ追加しましょう。",
+          "starterCode": "vals = [9.8, 10.0, 99.0]\n",
           "hints": [
             "3番目のインデックスは2です。",
-            "append()を使います。"
+            "末尾への追加はappend()です。"
           ],
-          "solution": "observations = [9.8, 10.0, 99.0]\nobservations[2] = 9.9\nobservations.append(10.1)\nprint(observations)\n",
+          "solution": "vals = [9.8, 10.0, 99.0]\nvals[2] = 9.9\nvals.append(10.1)\nprint(vals)\n",
           "check": {
             "outputEquals": "[9.8, 10.0, 9.9, 10.1]",
             "required": [
@@ -901,10 +594,6 @@ export const COURSE_CONTENT = {
           "cause": "values = values.append(x)と代入した",
           "fix": "appendはlist自体を変更するのでvalues.append(x)だけを書く"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法",
-        "オブジェクト指向資料のlistオブジェクト"
       ]
     },
     {
@@ -965,14 +654,14 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "05-p1",
-          "title": "辞書を更新",
-          "prompt": "studentのscoreを78から85へ更新し、passed=Trueを追加してください。",
-          "starterCode": "student = {\"name\": \"Mio\", \"score\": 78}\n",
+          "title": "ゲーム記録を更新",
+          "prompt": "user の score を78から85へ更新し、clear=True を追加して表示しましょう。",
+          "starterCode": "user = {\"name\": \"Mio\", \"score\": 78}\n",
           "hints": [
-            "student[\"score\"]へ再代入します。",
-            "新しいキーも同じ記法で追加します。"
+            "既存値の更新は user[\"score\"] = 85 です。",
+            "新しいキーも同じ代入の形で追加できます。"
           ],
-          "solution": "student = {\"name\": \"Mio\", \"score\": 78}\nstudent[\"score\"] = 85\nstudent[\"passed\"] = True\nprint(student)\n",
+          "solution": "user = {\"name\": \"Mio\", \"score\": 78}\nuser[\"score\"] = 85\nuser[\"clear\"] = True\nprint(user)\n",
           "check": {
             "outputContains": [
               "85",
@@ -980,20 +669,20 @@ export const COURSE_CONTENT = {
             ],
             "required": [
               "[\"score\"]",
-              "[\"passed\"]"
+              "[\"clear\"]"
             ]
           },
           "difficulty": "基礎"
         },
         {
           "id": "05-p2",
-          "title": "欠測キーを安全に読む",
-          "prompt": "recordにpressureがなければ『未測定』と表示してください。get()を使います。",
-          "starterCode": "record = {\"temperature\": 23.1}\n",
+          "title": "ない項目を安全に読む",
+          "prompt": "rec に pressure がないとき、「未測定」と表示しましょう。get()を使います。",
+          "starterCode": "rec = {\"temp\": 23.1}\n",
           "hints": [
-            "record.get(キー, 既定値)です。"
+            "rec.get(\"pressure\", \"未測定\") の形です。"
           ],
-          "solution": "record = {\"temperature\": 23.1}\nprint(record.get(\"pressure\", \"未測定\"))\n",
+          "solution": "rec = {\"temp\": 23.1}\nprint(rec.get(\"pressure\", \"未測定\"))\n",
           "check": {
             "outputEquals": "未測定",
             "required": [
@@ -1019,10 +708,6 @@ export const COURSE_CONTENT = {
           "cause": "存在しないキー、綴り、大文字小文字の違い",
           "fix": "print(record.keys())でキーを確認し、任意項目ならget()を使う"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法",
-        "オブジェクト指向資料のdictオブジェクト"
       ]
     },
     {
@@ -1081,13 +766,13 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "06-p1",
-          "title": "3次元座標のアンパック",
-          "prompt": "point=(1.5, -2.0, 4.5)をx,y,zへ分け、zだけ表示してください。",
-          "starterCode": "point = (1.5, -2.0, 4.5)\n",
+          "title": "座標を3つに分ける",
+          "prompt": "p=(1.5, -2.0, 4.5) を x、y、z に分け、zだけ表示しましょう。",
+          "starterCode": "p = (1.5, -2.0, 4.5)\n",
           "hints": [
-            "x, y, z = pointです。"
+            "x, y, z = p と書くと3つへ分けられます。"
           ],
-          "solution": "point = (1.5, -2.0, 4.5)\nx, y, z = point\nprint(z)\n",
+          "solution": "p = (1.5, -2.0, 4.5)\nx, y, z = p\nprint(z)\n",
           "check": {
             "outputEquals": "4.5",
             "required": [
@@ -1098,14 +783,13 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "06-p2",
-          "title": "1要素tuple",
-          "prompt": "valueを1要素tupleとして作り、型と長さを表示してください。",
-          "starterCode": "# valueを作る\n",
+          "title": "1個だけのtuple",
+          "prompt": "42だけを持つ one というtupleを作り、型と長さを表示しましょう。",
+          "starterCode": "# oneを作る\n",
           "hints": [
-            "末尾のカンマが必要です。",
-            "len(value)も表示します。"
+            "1要素tupleでは、42の後ろにカンマが必要です。"
           ],
-          "solution": "value = (42,)\nprint(type(value))\nprint(len(value))\n",
+          "solution": "one = (42,)\nprint(type(one))\nprint(len(one))\n",
           "check": {
             "outputContains": [
               "tuple",
@@ -1139,10 +823,6 @@ export const COURSE_CONTENT = {
           "cause": "要素数と左辺の変数数が違う",
           "fix": "len(tuple)と変数数を一致させる"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法",
-        "オブジェクト指向資料のtupleオブジェクト"
       ]
     },
     {
@@ -1203,13 +883,14 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "07-p1",
-          "title": "文字列を整える",
-          "prompt": "raw='  ALUMINUM Sample  'を'aluminum_sample'へ変換してください。",
-          "starterCode": "raw = \"  ALUMINUM Sample  \"\n",
+          "title": "文字列をきれいに整える",
+          "prompt": "text=\"  ALUMINUM Sample  \" を aluminum_sample へ変換しましょう。",
+          "starterCode": "text = \"  ALUMINUM Sample  \"\n",
           "hints": [
-            "strip→lower→replaceの順でつなげられます。"
+            "前後の空白はstrip()、小文字化はlower()です。",
+            "空白を_へ変えるにはreplace(\" \", \"_\")を使います。"
           ],
-          "solution": "raw = \"  ALUMINUM Sample  \"\nclean = raw.strip().lower().replace(\" \", \"_\")\nprint(clean)\n",
+          "solution": "text = \"  ALUMINUM Sample  \"\nclean = text.strip().lower().replace(\" \", \"_\")\nprint(clean)\n",
           "check": {
             "outputEquals": "aluminum_sample",
             "required": [
@@ -1222,17 +903,18 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "07-p2",
-          "title": "appendの誤りを直す",
-          "prompt": "valuesがNoneにならず[1,2,3]になるよう修正してください。",
-          "starterCode": "values = [1, 2]\nvalues = values.append(3)\nprint(values)\n",
+          "title": "append()の落とし穴を修正",
+          "prompt": "nums が None にならず、[1, 2, 3] と表示されるように直しましょう。",
+          "starterCode": "nums = [1, 2]\nnums = nums.append(3)\nprint(nums)\n",
           "hints": [
-            "appendの戻り値をvaluesへ再代入しません。"
+            "append()はlist自体を変え、戻り値はNoneです。",
+            "代入を外して nums.append(3) だけにします。"
           ],
-          "solution": "values = [1, 2]\nvalues.append(3)\nprint(values)\n",
+          "solution": "nums = [1, 2]\nnums.append(3)\nprint(nums)\n",
           "check": {
             "outputEquals": "[1, 2, 3]",
             "forbidden": [
-              "values = values.append"
+              "nums = nums.append"
             ]
           },
           "difficulty": "基礎"
@@ -1254,9 +936,6 @@ export const COURSE_CONTENT = {
           "cause": "その型に存在しないメソッド名を呼んだ",
           "fix": "type()とdir()、綴りを確認する"
         }
-      ],
-      "sourceRefs": [
-        "オブジェクト指向プログラミングの基礎概念 2章"
       ]
     },
     {
@@ -1320,14 +999,14 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "08-p1",
-          "title": "円周",
-          "prompt": "radius=2.5 mの円周をmath.piで計算し、小数2桁と単位を表示してください。",
-          "starterCode": "import math\nradius_m = 2.5\n",
+          "title": "円周を計算",
+          "prompt": "半径 r=2.5 m の円周を math.pi で求め、「15.71 m」と表示しましょう。",
+          "starterCode": "import math\nr = 2.5\n",
           "hints": [
-            "円周は2πrです。",
-            "f-stringの:.2fを使います。"
+            "円周は 2 * math.pi * r です。",
+            "小数2桁は:.2fです。"
           ],
-          "solution": "import math\nradius_m = 2.5\ncircumference_m = 2 * math.pi * radius_m\nprint(f\"{circumference_m:.2f} m\")\n",
+          "solution": "import math\nr = 2.5\nc = 2 * math.pi * r\nprint(f\"{c:.2f} m\")\n",
           "check": {
             "outputEquals": "15.71 m",
             "required": [
@@ -1339,13 +1018,13 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "08-p2",
-          "title": "sin 30度",
-          "prompt": "30度をラジアンへ変換してsinを表示してください。",
-          "starterCode": "import math\nangle_deg = 30\n",
+          "title": "sin 30°",
+          "prompt": "deg=30 をラジアンへ変換し、sinの値を表示しましょう。",
+          "starterCode": "import math\ndeg = 30\n",
           "hints": [
-            "math.radians(angle_deg)を使います。"
+            "rad = math.radians(deg) としてからmath.sin(rad)を使います。"
           ],
-          "solution": "import math\nangle_deg = 30\nangle_rad = math.radians(angle_deg)\nprint(math.sin(angle_rad))\n",
+          "solution": "import math\ndeg = 30\nrad = math.radians(deg)\nprint(math.sin(rad))\n",
           "check": {
             "numericOutput": 0.5,
             "tolerance": 1e-12,
@@ -1378,9 +1057,6 @@ export const COURSE_CONTENT = {
           "cause": "度をそのまま渡した",
           "fix": "math.radians()でラジアンへ変換する"
         }
-      ],
-      "sourceRefs": [
-        "NumPyの基本操作 1章：標準Pythonとmathによる科学計算"
       ]
     },
     {
@@ -1495,10 +1171,6 @@ export const COURSE_CONTENT = {
           "cause": "stepの符号とstart/stopの大小が合っていない",
           "fix": "増加なら正、減少なら負のstepにする"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法",
-        "Generative Art講義のrange反復"
       ]
     },
     {
@@ -1582,13 +1254,14 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "10-p2",
-          "title": "自力で合計",
-          "prompt": "values=[1.2,2.5,0.8]をsum()を使わずforで合計し、4.5を表示してください。",
-          "starterCode": "values = [1.2, 2.5, 0.8]\ntotal = 0.0\n# forで加算\n",
+          "title": "forで合計してみる",
+          "prompt": "nums=[1.2, 2.5, 0.8] を、sum()を使わずforで合計し、4.5を表示しましょう。",
+          "starterCode": "nums = [1.2, 2.5, 0.8]\ntotal = 0.0\n# forで足す\n",
           "hints": [
-            "各valueをtotalへ足します。"
+            "for x in nums: と書きます。",
+            "繰り返すたびに total += x とします。"
           ],
-          "solution": "values = [1.2, 2.5, 0.8]\ntotal = 0.0\nfor value in values:\n    total += value\nprint(total)\n",
+          "solution": "nums = [1.2, 2.5, 0.8]\ntotal = 0.0\nfor x in nums:\n    total += x\nprint(total)\n",
           "check": {
             "numericOutput": 4.5,
             "tolerance": 1e-12,
@@ -1623,10 +1296,6 @@ export const COURSE_CONTENT = {
           "cause": "保存したい値をlistへappendせず毎回上書きした",
           "fix": "結果listをループ前に作り、ループ内でappendする"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法",
-        "Generative Art講義：変数・反復・規則"
       ]
     },
     {
@@ -1690,13 +1359,13 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "11-p1",
-          "title": "範囲内判定",
-          "prompt": "value=1.05が0.95以上1.10以下かをis_validへ保存して表示してください。",
-          "starterCode": "value = 1.05\n",
+          "title": "範囲に入っているか",
+          "prompt": "x=1.05 が0.95以上1.10以下かを ok へ保存し、表示しましょう。",
+          "starterCode": "x = 1.05\n",
           "hints": [
-            "連鎖比較0.95 <= value <= 1.10が使えます。"
+            "Pythonでは 0.95 <= x <= 1.10 と連続して書けます。"
           ],
-          "solution": "value = 1.05\nis_valid = 0.95 <= value <= 1.10\nprint(is_valid)\n",
+          "solution": "x = 1.05\nok = 0.95 <= x <= 1.10\nprint(ok)\n",
           "check": {
             "outputEquals": "True",
             "required": [
@@ -1707,13 +1376,13 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "11-p2",
-          "title": "orを使う",
-          "prompt": "dayが'sat'または'sun'ならis_weekend=Trueとなる式を書いてください。",
+          "title": "週末かどうか",
+          "prompt": "day が \"sat\" または \"sun\" なら weekend=True となる式を書きましょう。",
           "starterCode": "day = \"sun\"\n",
           "hints": [
-            "(day == \"sat\") or (day == \"sun\")です。"
+            "day == \"sat\" or day == \"sun\" と、比較を2回書きます。"
           ],
-          "solution": "day = \"sun\"\nis_weekend = (day == \"sat\") or (day == \"sun\")\nprint(is_weekend)\n",
+          "solution": "day = \"sun\"\nweekend = day == \"sat\" or day == \"sun\"\nprint(weekend)\n",
           "check": {
             "outputEquals": "True",
             "required": [
@@ -1745,9 +1414,6 @@ export const COURSE_CONTENT = {
           "cause": "<と<=を取り違えた",
           "fix": "含むなら<=または>=、含まないなら<または>を使う"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法"
       ]
     },
     {
@@ -1808,14 +1474,14 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "12-p1",
-          "title": "三段階判定",
-          "prompt": "mass_gを2.0未満light、5.0以下medium、それ以外heavyへ分類してください。",
-          "starterCode": "mass_g = 5.0\n",
+          "title": "重さを3段階に分ける",
+          "prompt": "mass=5.0 を、2.0未満なら light、5.0以下なら medium、それ以外なら heavy に分類しましょう。",
+          "starterCode": "mass = 5.0\n",
           "hints": [
-            "条件は狭い/厳しい方から並べます。",
-            "2.0未満、次に5.0以下です。"
+            "if mass < 2.0: から始めます。",
+            "境界の5.0をmediumへ含めるため、elif mass <= 5.0: とします。"
           ],
-          "solution": "mass_g = 5.0\nif mass_g < 2.0:\n    label = \"light\"\nelif mass_g <= 5.0:\n    label = \"medium\"\nelse:\n    label = \"heavy\"\nprint(label)\n",
+          "solution": "mass = 5.0\nif mass < 2.0:\n    label = \"light\"\nelif mass <= 5.0:\n    label = \"medium\"\nelse:\n    label = \"heavy\"\nprint(label)\n",
           "check": {
             "outputEquals": "medium",
             "required": [
@@ -1862,10 +1528,6 @@ export const COURSE_CONTENT = {
           "cause": "広い条件を先に置いた",
           "fix": "上から最初のTrueで止まるため、条件順序を見直す"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法",
-        "Generative Art講義：条件分岐"
       ]
     },
     {
@@ -1946,13 +1608,14 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "13-p2",
-          "title": "合格者数",
-          "prompt": "scoresの60点以上の人数を数えて表示してください。",
-          "starterCode": "scores = [42, 60, 73, 58, 91, 66]\npassed_count = 0\n",
+          "title": "合格者を数える",
+          "prompt": "scores のうち60点以上の人数を count で数えて表示しましょう。",
+          "starterCode": "scores = [42, 60, 73, 58, 91, 66]\ncount = 0\n",
           "hints": [
-            "合格するたびpassed_count += 1です。"
+            "点数を1つずつforで取り出します。",
+            "60以上のときだけ count += 1 とします。"
           ],
-          "solution": "scores = [42, 60, 73, 58, 91, 66]\npassed_count = 0\nfor score in scores:\n    if score >= 60:\n        passed_count += 1\nprint(passed_count)\n",
+          "solution": "scores = [42, 60, 73, 58, 91, 66]\ncount = 0\nfor score in scores:\n    if score >= 60:\n        count += 1\nprint(count)\n",
           "check": {
             "outputEquals": "4",
             "required": [
@@ -1985,10 +1648,6 @@ export const COURSE_CONTENT = {
           "cause": "if本体のインデントが外れている",
           "fix": "forとifの二段階インデントを確認する"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法",
-        "NumPy資料のブール抽出への準備"
       ]
     },
     {
@@ -2049,18 +1708,18 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "14-p1",
-          "title": "円の面積関数",
-          "prompt": "radiusを受け取りmath.pi*r**2を返すcircle_areaを定義し、半径2の面積を表示してください。",
-          "starterCode": "import math\n\ndef circle_area(radius):\n    # returnを書く\n    pass\n\nprint(circle_area(2.0))\n",
+          "title": "円の面積を返す関数",
+          "prompt": "半径 r を受け取り math.pi * r ** 2 を返す area() を作り、r=2の結果を表示しましょう。",
+          "starterCode": "import math\n\ndef area(r):\n    # returnを書く\n    pass\n\nprint(area(2.0))\n",
           "hints": [
-            "return math.pi * radius ** 2です。"
+            "関数の中で return math.pi * r ** 2 とします。"
           ],
-          "solution": "import math\n\ndef circle_area(radius):\n    return math.pi * radius ** 2\n\nprint(circle_area(2.0))\n",
+          "solution": "import math\n\ndef area(r):\n    return math.pi * r ** 2\n\nprint(area(2.0))\n",
           "check": {
             "numericOutput": 12.566370614359172,
             "tolerance": 1e-10,
             "required": [
-              "def circle_area",
+              "def area",
               "return",
               "math.pi"
             ]
@@ -2069,17 +1728,17 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "14-p2",
-          "title": "判定関数",
-          "prompt": "scoreを受け取り60以上ならTrueを返すis_passedを定義し、55と72で確認してください。",
-          "starterCode": "def is_passed(score):\n    pass\n\nprint(is_passed(55))\nprint(is_passed(72))\n",
+          "title": "合格判定を返す関数",
+          "prompt": "score が60以上ならTrueを返す passed() を作り、55と72で試しましょう。",
+          "starterCode": "def passed(score):\n    pass\n\nprint(passed(55))\nprint(passed(72))\n",
           "hints": [
-            "比較式そのものをreturnできます。"
+            "比較式 score >= 60 は、そのままTrueまたはFalseになります。"
           ],
-          "solution": "def is_passed(score):\n    return score >= 60\n\nprint(is_passed(55))\nprint(is_passed(72))\n",
+          "solution": "def passed(score):\n    return score >= 60\n\nprint(passed(55))\nprint(passed(72))\n",
           "check": {
             "outputEquals": "False\nTrue",
             "required": [
-              "def is_passed",
+              "def passed",
               "return"
             ]
           },
@@ -2107,10 +1766,6 @@ export const COURSE_CONTENT = {
           "cause": "必要な実引数を渡していない",
           "fix": "定義の仮引数数と呼び出しの実引数を対応させる"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法",
-        "オブジェクト指向資料：関数とメソッド"
       ]
     },
     {
@@ -2172,13 +1827,14 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "15-p1",
-          "title": "NameErrorを修正",
-          "prompt": "コードを実行し、Tracebackを読んで正しく12.5と表示されるよう修正してください。",
-          "starterCode": "distance_km = 25.0\ntime_hour = 2.0\nspeed = distance_km / time_hours\nprint(speed)\n",
+          "title": "NameErrorを直す",
+          "prompt": "実行してTracebackを読み、12.5と表示されるように変数名のまちがいを直しましょう。",
+          "starterCode": "dist = 25.0\ntime = 2.0\nspeed = dist / times\nprint(speed)\n",
           "hints": [
-            "定義した時間変数の名前と、使用した名前を比べます。"
+            "エラーの最後にあるNameErrorと、名前timesに注目します。",
+            "定義済みなのはtimeです。"
           ],
-          "solution": "distance_km = 25.0\ntime_hour = 2.0\nspeed = distance_km / time_hour\nprint(speed)\n",
+          "solution": "dist = 25.0\ntime = 2.0\nspeed = dist / time\nprint(speed)\n",
           "check": {
             "numericOutput": 12.5,
             "tolerance": 1e-12
@@ -2187,18 +1843,18 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "15-p2",
-          "title": "平均関数を修正",
-          "prompt": "len(value)を適切に直し、平均4.0を表示してください。",
-          "starterCode": "def average(values):\n    total = 0\n    for value in values:\n        total += value\n    return total / len(value)\n\nprint(average([2, 4, 6]))\n",
+          "title": "平均関数の小さなバグ",
+          "prompt": "len(x)の部分を直し、平均4.0を表示しましょう。",
+          "starterCode": "def mean(nums):\n    total = 0\n    for x in nums:\n        total += x\n    return total / len(x)\n\nprint(mean([2, 4, 6]))\n",
           "hints": [
-            "長さを求めたいのは単一のvalueではなくvaluesです。"
+            "len()へ渡したいのは、1個の値xではなくlist全体です。"
           ],
-          "solution": "def average(values):\n    total = 0\n    for value in values:\n        total += value\n    return total / len(values)\n\nprint(average([2, 4, 6]))\n",
+          "solution": "def mean(nums):\n    total = 0\n    for x in nums:\n        total += x\n    return total / len(nums)\n\nprint(mean([2, 4, 6]))\n",
           "check": {
-            "numericOutput": 4.0,
+            "numericOutput": 4,
             "tolerance": 1e-12,
             "required": [
-              "len(values)"
+              "len(nums)"
             ]
           },
           "difficulty": "基礎"
@@ -2220,10 +1876,6 @@ export const COURSE_CONTENT = {
           "cause": "原因の局所化をしていない",
           "fix": "例外名・行・直前の値を確認し、一度に1箇所だけ直す"
         }
-      ],
-      "sourceRefs": [
-        "Python基礎文法",
-        "評価資料：説明可能性・検証"
       ]
     },
     {
@@ -2284,16 +1936,16 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "16-p1",
-          "title": "範囲内の平均",
-          "prompt": "valid_mean(values,lower,upper)を作り、範囲内だけの平均を返してください。",
-          "starterCode": "def valid_mean(values, lower, upper):\n    # 実装\n    pass\n\nprint(valid_mean([1, 2, 100, 3], 1, 3))\n",
+          "title": "範囲内だけの平均",
+          "prompt": "mean_in(nums, low, high)を作り、範囲内の値だけの平均を返しましょう。",
+          "starterCode": "def mean_in(nums, low, high):\n    # ここに書く\n    pass\n\nprint(mean_in([1, 2, 100, 3], 1, 3))\n",
           "hints": [
-            "validという空listを作ります。",
-            "forとifで追加し、最後にsum(valid)/len(valid)です。"
+            "空のlistを作り、low <= x <= high の値だけappendします。",
+            "最後に合計を個数で割ってreturnします。"
           ],
-          "solution": "def valid_mean(values, lower, upper):\n    valid = []\n    for value in values:\n        if lower <= value <= upper:\n            valid.append(value)\n    return sum(valid) / len(valid)\n\nprint(valid_mean([1, 2, 100, 3], 1, 3))\n",
+          "solution": "def mean_in(nums, low, high):\n    keep = []\n    for x in nums:\n        if low <= x <= high:\n            keep.append(x)\n    return sum(keep) / len(keep)\n\nprint(mean_in([1, 2, 100, 3], 1, 3))\n",
           "check": {
-            "numericOutput": 2.0,
+            "numericOutput": 2,
             "tolerance": 1e-12,
             "required": [
               "def",
@@ -2306,14 +1958,14 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "16-p2",
-          "title": "3条件比較",
-          "prompt": "同じvaluesに対しthreshold 5,10,15以上の個数を関数で表示してください。",
-          "starterCode": "values = [3, 7, 11, 15, 18]\n\ndef count_above(values, threshold):\n    count = 0\n    # 実装\n    return count\n\n# 3条件をforで比較\n",
+          "title": "3つの基準を比べる",
+          "prompt": "numsについて、5、10、15以上の個数をcount_ge()で数え、3行表示しましょう。",
+          "starterCode": "nums = [3, 7, 11, 15, 18]\n\ndef count_ge(nums, limit):\n    count = 0\n    # ここに書く\n    return count\n\n# 5, 10, 15をforで試す\n",
           "hints": [
-            "関数内でvalue>=thresholdならcountを増やします。",
-            "for threshold in [5,10,15]です。"
+            "関数内では x >= limit のときcountを増やします。",
+            "関数の外で for limit in [5, 10, 15]: とします。"
           ],
-          "solution": "values = [3, 7, 11, 15, 18]\n\ndef count_above(values, threshold):\n    count = 0\n    for value in values:\n        if value >= threshold:\n            count += 1\n    return count\n\nfor threshold in [5, 10, 15]:\n    print(threshold, count_above(values, threshold))\n",
+          "solution": "nums = [3, 7, 11, 15, 18]\n\ndef count_ge(nums, limit):\n    count = 0\n    for x in nums:\n        if x >= limit:\n            count += 1\n    return count\n\nfor limit in [5, 10, 15]:\n    print(limit, count_ge(nums, limit))\n",
           "check": {
             "outputEquals": "5 4\n10 3\n15 2",
             "required": [
@@ -2341,10 +1993,6 @@ export const COURSE_CONTENT = {
           "cause": "比較の目的と制御変数が整理されていない",
           "fix": "変更する変数を1つ宣言し、他条件を固定する"
         }
-      ],
-      "sourceRefs": [
-        "Generative Art教材の比較・再現可能性",
-        "評価ルーブリック"
       ]
     },
     {
@@ -2455,9 +2103,6 @@ export const COURSE_CONTENT = {
           "cause": "b=aで同じオブジェクトを参照した",
           "fix": "独立させるならcopy()、入れ子ならcopy.deepcopyも検討する"
         }
-      ],
-      "sourceRefs": [
-        "オブジェクト指向プログラミングの基礎概念 1〜2章"
       ]
     },
     {
@@ -2519,38 +2164,38 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "18-p1",
-          "title": "試料class",
-          "prompt": "Sample classへnameとmass_gを保存し、describe()で『A: 2.50 g』を返してください。",
-          "starterCode": "class Sample:\n    def __init__(self, name, mass_g):\n        pass\n\n    def describe(self):\n        pass\n\nsample = Sample(\"A\", 2.5)\nprint(sample.describe())\n",
+          "title": "小さなSample class",
+          "prompt": "Sampleへnameとmassを保存し、show()で「A: 2.50 g」を返しましょう。",
+          "starterCode": "class Sample:\n    def __init__(self, name, mass):\n        pass\n\n    def show(self):\n        pass\n\ns = Sample(\"A\", 2.5)\nprint(s.show())\n",
           "hints": [
-            "self.name=name、self.mass_g=mass_gです。",
-            "return f\"{self.name}: {self.mass_g:.2f} g\"です。"
+            "__init__で self.name と self.mass に代入します。",
+            "show()ではf-stringをreturnします。"
           ],
-          "solution": "class Sample:\n    def __init__(self, name, mass_g):\n        self.name = name\n        self.mass_g = mass_g\n\n    def describe(self):\n        return f\"{self.name}: {self.mass_g:.2f} g\"\n\nsample = Sample(\"A\", 2.5)\nprint(sample.describe())\n",
+          "solution": "class Sample:\n    def __init__(self, name, mass):\n        self.name = name\n        self.mass = mass\n\n    def show(self):\n        return f\"{self.name}: {self.mass:.2f} g\"\n\ns = Sample(\"A\", 2.5)\nprint(s.show())\n",
           "check": {
             "outputEquals": "A: 2.50 g",
             "required": [
               "class Sample",
               "__init__",
               "self.name",
-              "def describe"
+              "def show"
             ]
           },
           "difficulty": "標準"
         },
         {
           "id": "18-p2",
-          "title": "状態更新",
-          "prompt": "Counter classのincrement()でcountを1増やし、3回呼んで3を表示してください。",
-          "starterCode": "class Counter:\n    def __init__(self):\n        self.count = 0\n\n    def increment(self):\n        pass\n\ncounter = Counter()\nfor _ in range(3):\n    counter.increment()\nprint(counter.count)\n",
+          "title": "カウンターを3回進める",
+          "prompt": "Counterのadd()でnを1増やし、3回呼んで3を表示しましょう。",
+          "starterCode": "class Counter:\n    def __init__(self):\n        self.n = 0\n\n    def add(self):\n        pass\n\nc = Counter()\nfor _ in range(3):\n    c.add()\nprint(c.n)\n",
           "hints": [
-            "self.count += 1です。"
+            "add()の中で self.n += 1 とします。"
           ],
-          "solution": "class Counter:\n    def __init__(self):\n        self.count = 0\n\n    def increment(self):\n        self.count += 1\n\ncounter = Counter()\nfor _ in range(3):\n    counter.increment()\nprint(counter.count)\n",
+          "solution": "class Counter:\n    def __init__(self):\n        self.n = 0\n\n    def add(self):\n        self.n += 1\n\nc = Counter()\nfor _ in range(3):\n    c.add()\nprint(c.n)\n",
           "check": {
             "outputEquals": "3",
             "required": [
-              "self.count += 1"
+              "self.n += 1"
             ]
           },
           "difficulty": "基礎"
@@ -2577,9 +2222,6 @@ export const COURSE_CONTENT = {
           "cause": "__init__で属性を作っていない、綴りが違う",
           "fix": "self.attributeへの代入と参照名を揃える"
         }
-      ],
-      "sourceRefs": [
-        "オブジェクト指向プログラミングの基礎概念 3章"
       ]
     },
     {
@@ -2702,9 +2344,6 @@ export const COURSE_CONTENT = {
           "cause": "入れ子の括弧や行ごとの要素数が違う",
           "fix": "print(data.shape)とdataを最初に確認する"
         }
-      ],
-      "sourceRefs": [
-        "NumPyの基本操作 1〜3章"
       ]
     },
     {
@@ -2790,13 +2429,13 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "20-p2",
-          "title": "np.where",
-          "prompt": "temperaturesが25以上なら'high'、未満なら'normal'のlabelsを作って表示してください。",
-          "starterCode": "import numpy as np\ntemperatures = np.array([20, 25, 28, 23])\n",
+          "title": "温度を2種類に分類",
+          "prompt": "tempsが25以上ならhigh、未満ならnormalとなるtagsをnp.whereで作りましょう。",
+          "starterCode": "import numpy as np\ntemps = np.array([20, 25, 28, 23])\n",
           "hints": [
-            "np.where(条件, True側, False側)です。"
+            "np.where(条件, Trueの値, Falseの値)の順です。"
           ],
-          "solution": "import numpy as np\ntemperatures = np.array([20, 25, 28, 23])\nlabels = np.where(temperatures >= 25, \"high\", \"normal\")\nprint(labels)\n",
+          "solution": "import numpy as np\ntemps = np.array([20, 25, 28, 23])\ntags = np.where(temps >= 25, \"high\", \"normal\")\nprint(tags)\n",
           "check": {
             "outputContains": [
               "normal",
@@ -2830,9 +2469,6 @@ export const COURSE_CONTENT = {
           "cause": "スカラー用math関数を使った",
           "fix": "np.sinなどNumPy関数へ置き換える"
         }
-      ],
-      "sourceRefs": [
-        "NumPyの基本操作 4〜7章"
       ]
     },
     {
@@ -2913,14 +2549,14 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "21-p2",
-          "title": "列抽出と保存",
-          "prompt": "time_sとvalueを抽出し、valueを2倍した列とともにscaled.csvへ保存してください。",
+          "title": "2列を取り出して保存",
+          "prompt": "0列目をt、1列目をyへ取り出し、yを2倍した列と一緒にscaled.csvへ保存しましょう。",
           "starterCode": "import numpy as np\ndata = np.loadtxt(\"experiment.csv\", delimiter=\",\", skiprows=1)\n",
           "hints": [
-            "time_s=data[:,0]、value=data[:,1]です。",
-            "np.column_stackしてnp.savetxtします。"
+            "t = data[:, 0]、y = data[:, 1] とします。",
+            "np.column_stack([t, 2 * y])で2列に戻せます。"
           ],
-          "solution": "import numpy as np\ndata = np.loadtxt(\"experiment.csv\", delimiter=\",\", skiprows=1)\ntime_s = data[:, 0]\nvalue = data[:, 1]\nout = np.column_stack([time_s, 2 * value])\nnp.savetxt(\"scaled.csv\", out, delimiter=\",\", header=\"time_s,scaled_value\", comments=\"\")\nprint(out[:3])\n",
+          "solution": "import numpy as np\ndata = np.loadtxt(\"experiment.csv\", delimiter=\",\", skiprows=1)\nt = data[:, 0]\ny = data[:, 1]\nout = np.column_stack([t, 2 * y])\nnp.savetxt(\"scaled.csv\", out, delimiter=\",\", header=\"t,scaled_y\", comments=\"\")\nprint(out[:3])\n",
           "check": {
             "required": [
               "data[:, 0]",
@@ -2952,9 +2588,6 @@ export const COURSE_CONTENT = {
           "cause": "ファイル名・作業ディレクトリが違う",
           "fix": "同梱名を正確に使い、アプリのファイル一覧を確認する"
         }
-      ],
-      "sourceRefs": [
-        "NumPyを用いたデータ解析 1章"
       ]
     },
     {
@@ -3085,9 +2718,6 @@ export const COURSE_CONTENT = {
           "cause": "各列を別々にsortした",
           "fix": "1列のargsortを共通インデックスとして全列へ適用する"
         }
-      ],
-      "sourceRefs": [
-        "NumPyを用いたデータ解析 1〜2章・コラム"
       ]
     },
     {
@@ -3180,14 +2810,14 @@ export const COURSE_CONTENT = {
         },
         {
           "id": "23-p2",
-          "title": "2種類の可視化",
-          "prompt": "同じvaluesをhistと、index対valueのscatterで横並びにし、各軸をラベル付けしてください。",
-          "starterCode": "import numpy as np\nimport matplotlib.pyplot as plt\nvalues = np.array([2.1, 2.4, 2.2, 3.0, 2.8, 2.3])\n",
+          "title": "同じデータを2つの見方で描く",
+          "prompt": "valsをhistと、番号対valsのscatterで横に並べ、各軸へラベルを付けましょう。",
+          "starterCode": "import numpy as np\nimport matplotlib.pyplot as plt\nvals = np.array([2.1, 2.4, 2.2, 3.0, 2.8, 2.3])\n",
           "hints": [
-            "fig,axes=plt.subplots(1,2)です。",
-            "axes[0].hist、axes[1].scatterを使います。"
+            "fig, axes = plt.subplots(1, 2, ...)で2つのAxesを作ります。",
+            "scatterの横軸にはnp.arange(len(vals))を使えます。"
           ],
-          "solution": "import numpy as np\nimport matplotlib.pyplot as plt\nvalues = np.array([2.1, 2.4, 2.2, 3.0, 2.8, 2.3])\nfig, axes = plt.subplots(1, 2, figsize=(8, 3))\naxes[0].hist(values, bins=4, edgecolor=\"black\")\naxes[0].set_xlabel(\"Value [a.u.]\")\naxes[0].set_ylabel(\"Count\")\naxes[1].scatter(np.arange(len(values)), values)\naxes[1].set_xlabel(\"Sample index\")\naxes[1].set_ylabel(\"Value [a.u.]\")\nfig.tight_layout()\nplt.show()\n",
+          "solution": "import numpy as np\nimport matplotlib.pyplot as plt\nvals = np.array([2.1, 2.4, 2.2, 3.0, 2.8, 2.3])\nfig, axes = plt.subplots(1, 2, figsize=(8, 3))\naxes[0].hist(vals, bins=4, edgecolor=\"black\")\naxes[0].set_xlabel(\"Value [a.u.]\")\naxes[0].set_ylabel(\"Count\")\naxes[1].scatter(np.arange(len(vals)), vals)\naxes[1].set_xlabel(\"Index\")\naxes[1].set_ylabel(\"Value [a.u.]\")\nfig.tight_layout()\nplt.show()\n",
           "check": {
             "required": [
               "subplots(1, 2",
@@ -3230,116 +2860,6 @@ export const COURSE_CONTENT = {
           "cause": "カテゴリ/独立観測へplotを使った",
           "fix": "関係に応じてscatterやbarを選ぶ"
         }
-      ],
-      "sourceRefs": [
-        "Matplotlibを用いたデータ可視化 全章"
-      ]
-    }
-  ],
-  "sourceCoverage": [
-    {
-      "source": "Python基礎文法（講義で扱ってきた範囲）",
-      "coverage": [
-        "変数・型・四則演算",
-        "print・f-string",
-        "list・dict・tuple",
-        "math",
-        "range・for",
-        "比較・if",
-        "def・return",
-        "デバッグ"
-      ],
-      "lessons": [
-        "01-variables",
-        "02-print",
-        "03-fstrings",
-        "04-list",
-        "05-dict",
-        "06-tuple",
-        "08-math",
-        "09-range",
-        "10-for",
-        "11-conditions",
-        "12-if",
-        "13-for-if",
-        "14-def",
-        "15-decompose-debug",
-        "16-integrated"
-      ]
-    },
-    {
-      "source": "オブジェクト指向プログラミングの基礎概念（追加講義資料1）",
-      "coverage": [
-        "変数とメモリ・参照",
-        "Pythonオブジェクトの概念",
-        "属性・メソッド・dir",
-        "すべてがオブジェクト",
-        "手続き型とOOP",
-        "class・instance・self",
-        "継承の入口"
-      ],
-      "lessons": [
-        "07-methods",
-        "17-objects-memory",
-        "18-class-oop"
-      ]
-    },
-    {
-      "source": "NumPyの基本操作（追加講義資料2）",
-      "coverage": [
-        "科学計算とmath",
-        "listの柔軟性と数値計算上の負荷",
-        "NumPyのimport",
-        "ndarray・shape・dtype",
-        "array・arange・linspace",
-        "index・slice",
-        "ベクトル化",
-        "npの数学関数",
-        "集約",
-        "ブールインデックス",
-        "np.where"
-      ],
-      "lessons": [
-        "08-math",
-        "19-numpy-array",
-        "20-numpy-index-ufunc"
-      ]
-    },
-    {
-      "source": "NumPyを用いたデータ解析（追加講義資料3）",
-      "coverage": [
-        "loadtxt・genfromtxt",
-        "shape・dtype・先頭確認",
-        "行列スライス・列抽出",
-        "欠損値・異常値",
-        "sort・argsort",
-        "savetxt",
-        "npy・npz",
-        "巨大データとDask",
-        "前処理ツールawkの位置付け"
-      ],
-      "lessons": [
-        "21-data-io",
-        "22-missing-save"
-      ]
-    },
-    {
-      "source": "Matplotlibを用いたデータ可視化（追加講義資料4）",
-      "coverage": [
-        "可視化の必要性",
-        "軸ラベルと単位",
-        "plot",
-        "scatter",
-        "hist",
-        "bar",
-        "title・legend・grid",
-        "subplots",
-        "tight_layout",
-        "savefig",
-        "外れ値・相関・図の読み方"
-      ],
-      "lessons": [
-        "23-matplotlib"
       ]
     }
   ],

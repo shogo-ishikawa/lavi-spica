@@ -4,14 +4,14 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 APP_NAME="LAVi-SPICA"
-VERSION="$(cat VERSION 2>/dev/null || printf '1.0.0')"
-COMMIT_MESSAGE="Release ${APP_NAME} v${VERSION}"
+VERSION="$(cat VERSION 2>/dev/null || printf '1.1.0')"
+COMMIT_MESSAGE="Update ${APP_NAME} to v${VERSION}"
 
-printf '\n%s\n' "${APP_NAME} v${VERSION} — GitHub HTTPS publication"
+printf '\n%s\n' "${APP_NAME} v${VERSION} — GitHub HTTPS push"
 printf '%s\n\n' "Working directory: $(pwd)"
 
 if [ ! -f "index.html" ] || [ ! -f "package.json" ] || [ ! -f "assets/lavi-spica-hero.png" ]; then
-  printf '%s\n' "Error: Run this command inside the LAVi-SPICA vX.Y.Z release directory." >&2
+  printf '%s\n' "Error: Run this command inside the LAVi-SPICA vX.Y.Z directory." >&2
   exit 1
 fi
 
@@ -25,6 +25,13 @@ if [ ! -d .git ]; then
 else
   git branch -M main
 fi
+
+for protected_file in teacher/teacher.js teacher/question-bank.js teacher/answer-key.js; do
+  if ! git check-ignore -q "$protected_file" 2>/dev/null; then
+    printf '%s\n' "Error: teacher/ is not excluded by .gitignore. Push was stopped to protect instructor-only files." >&2
+    exit 1
+  fi
+done
 
 if [ -z "$(git config --get user.name 2>/dev/null || true)" ]; then
   printf 'Git commit author name: '
@@ -65,14 +72,14 @@ else
 fi
 
 if [ "${SPICA_PREPARE_ONLY:-0}" != "1" ]; then
-  printf '\n%s\n' "Checking the remote main branch..."
+  printf '\n%s\n' "Checking origin/main..."
   if git ls-remote --exit-code --heads origin main >/dev/null 2>&1; then
     git fetch origin main
     if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
       git reset --mixed origin/main
     elif ! git merge-base --is-ancestor origin/main HEAD >/dev/null 2>&1; then
       printf '%s\n' "The local history does not contain origin/main." >&2
-      printf '%s' "Use origin/main as the base while keeping the current release files? [y/N]: "
+      printf '%s' "Use origin/main as the base while keeping the current files? [y/N]: "
       IFS= read -r ANSWER
       case "$ANSWER" in
         y|Y|yes|YES) git reset --mixed origin/main ;;
@@ -84,6 +91,11 @@ fi
 
 git add -A
 
+if [ -n "$(git ls-files 'teacher/*')" ]; then
+  printf '%s\n' "Error: instructor-only files under teacher/ are staged or tracked. Push was stopped." >&2
+  exit 1
+fi
+
 if git diff --cached --quiet; then
   printf '%s\n' "No file changes to commit. The existing commit will be pushed."
 else
@@ -93,13 +105,14 @@ fi
 git branch -M main
 
 if [ "${SPICA_PREPARE_ONLY:-0}" = "1" ]; then
-  printf '\n%s\n' "Prepared local Git commit only; push was skipped because SPICA_PREPARE_ONLY=1."
+  printf '\n%s\n' "Prepared the local Git commit. Push was skipped because SPICA_PREPARE_ONLY=1."
+  printf '%s\n' "The teacher/ directory remains only on this computer."
   exit 0
 fi
 
 printf '\n%s\n' "Pushing to GitHub over HTTPS..."
 git push -u origin main
 
-printf '\n%s\n' "Publication completed."
-printf '%s\n' "Next: GitHub repository → Settings → Pages → Source: GitHub Actions"
-printf '%s\n' "Authentication note: use Git Credential Manager or a Personal Access Token; an account password is not accepted for Git operations over HTTPS."
+printf '\n%s\n' "Push completed."
+printf '%s\n' "The student app is in the repository; teacher/ and its answer key remain local."
+printf '%s\n' "For GitHub Pages, set Settings → Pages → Source to GitHub Actions."

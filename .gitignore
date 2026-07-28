@@ -3,3 +3,6 @@ node_modules/
 *.log
 .vscode/
 .idea/
+
+# Instructor-only local tools and answer key
+teacher/

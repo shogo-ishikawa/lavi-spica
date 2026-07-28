@@ -1,13 +1,67 @@
+import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { QUIZ_DATA } from "../js/quiz-bank.js";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { canonicalAnswer } from "../js/utils.js";
 
+const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const failures = [];
-const questionById = new Map(QUIZ_DATA.questions.map((question) => [question.id, question]));
+const questionPath = join(root, "teacher/question-bank.js");
+const answerPath = join(root, "teacher/answer-key.js");
+
+function publicQuizChecks() {
+  const publicBankPath = join(root, "quiz/question-bank.js");
+  assert(!existsSync(publicBankPath), "公開quiz directoryに問題バンクがあります");
+  const quizJs = existsSync(join(root, "quiz/quiz.js")) ? (awaitRead("quiz/quiz.js")) : "";
+  const coreJs = existsSync(join(root, "quiz/quiz-core.js")) ? (awaitRead("quiz/quiz-core.js")) : "";
+  assert(!/QUIZ_ANSWER_KEY|answer-key|question-bank|QUESTION_DATA/.test(quizJs), "学生用quiz.jsが問題バンクまたは採点キーを参照しています");
+  assert(!/QUIZ_ANSWER_KEY|answer-key|question-bank|QUESTION_DATA/.test(coreJs), "学生用quiz-core.jsが問題バンクまたは採点キーを参照しています");
+  assert(coreJs.includes("lavi-spica-quiz-link-v1"), "当日リンクpayloadの形式がありません");
+}
+
+function awaitRead(relativePath) {
+  return readFileSync(join(root, relativePath), "utf8");
+}
 
 function assert(condition, message) {
   if (!condition) failures.push(message);
 }
+
+publicQuizChecks();
+
+if (!existsSync(questionPath) || !existsSync(answerPath)) {
+  if (failures.length) {
+    console.error(`\nLAVi-SPICA public quiz validation failed (${failures.length})`);
+    failures.forEach((failure) => console.error(`- ${failure}`));
+    process.exit(1);
+  }
+  console.log("The public day-of quiz reader contains neither the question bank nor the answer key.");
+  console.log("Instructor-only question and answer execution checks were skipped because teacher/ is absent from this Git checkout.");
+  process.exit(0);
+}
+
+const { QUESTION_DATA } = await import(`${pathToFileURL(questionPath).href}?validation=${Date.now()}`);
+
+for (const item of QUESTION_DATA.questions) {
+  assert(["single", "multi", "text"].includes(item.type), `typeが不正です: ${item.id}`);
+  assert(["基礎", "標準", "発展"].includes(item.difficulty), `難度が不正です: ${item.id}`);
+  assert(Array.isArray(item.tags) && item.tags.length >= 1, `tagがありません: ${item.id}`);
+  assert(!Object.hasOwn(item, "answer"), `問題バンクに正答indexがあります: ${item.id}`);
+  assert(!Object.hasOwn(item, "accepted"), `問題バンクにacceptedがあります: ${item.id}`);
+  assert(!Object.hasOwn(item, "explanation"), `問題バンクに解説があります: ${item.id}`);
+  if (item.options) assert(new Set(item.options).size === item.options.length, `選択肢が重複しています: ${item.id}`);
+}
+assert(QUESTION_DATA.questions.length === 98, `問題数が98ではありません: ${QUESTION_DATA.questions.length}`);
+for (let session = 1; session <= 7; session += 1) {
+  assert(QUESTION_DATA.questions.filter((item) => Number(item.session) === session).length === 14, `第${session}回の問題数が14ではありません`);
+}
+
+const { QUIZ_ANSWER_KEY } = await import(`${pathToFileURL(answerPath).href}?validation=${Date.now()}`);
+assert(QUIZ_ANSWER_KEY.meta.version === QUESTION_DATA.meta.version, "問題バンクと採点キーのversionが一致しません");
+assert(Object.keys(QUIZ_ANSWER_KEY.answers).length === QUESTION_DATA.questions.length, "採点キー件数が問題数と一致しません");
+
+const questions = QUESTION_DATA.questions.map((question) => ({ ...question, ...(QUIZ_ANSWER_KEY.answers[question.id] || {}) }));
+const questionById = new Map(questions.map((question) => [question.id, question]));
 
 function question(id) {
   const item = questionById.get(id);
@@ -20,21 +74,26 @@ function acceptedMatches(item, value) {
   return (item.accepted || []).some((candidate) => canonicalAnswer(candidate) === actual);
 }
 
-for (const item of QUIZ_DATA.questions) {
-  assert(["基礎", "標準", "発展"].includes(item.difficulty), `難度が不正です: ${item.id}`);
-  assert(Array.isArray(item.tags) && item.tags.length >= 1, `tagがありません: ${item.id}`);
-  if (item.options) assert(new Set(item.options).size === item.options.length, `選択肢が重複しています: ${item.id}`);
+for (const item of questions) {
+  assert(Boolean(QUIZ_ANSWER_KEY.answers[item.id]), `採点キーがありません: ${item.id}`);
+  assert(typeof item.explanation === "string" && item.explanation.length > 0, `解説がありません: ${item.id}`);
+  if (item.type === "single") {
+    assert(Number.isInteger(item.answer), `単一選択の正答indexがありません: ${item.id}`);
+    assert(item.answer >= 0 && item.answer < item.options.length, `単一選択の正答indexが範囲外です: ${item.id}`);
+  }
   if (item.type === "multi") {
+    assert(Array.isArray(item.answer) && item.answer.length >= 1, `複数選択の正答がありません: ${item.id}`);
     assert(new Set(item.answer).size === item.answer.length, `複数選択の正答indexが重複しています: ${item.id}`);
+    assert(item.answer.every((index) => Number.isInteger(index) && index >= 0 && index < item.options.length), `複数選択の正答indexが範囲外です: ${item.id}`);
   }
   if (item.type === "text") {
     const normalized = (item.accepted || []).map(canonicalAnswer);
+    assert(normalized.length >= 1, `記述式acceptedがありません: ${item.id}`);
     assert(normalized.every(Boolean), `記述式acceptedに空文字があります: ${item.id}`);
     assert(new Set(normalized).size === normalized.length, `記述式acceptedが正規化後に重複しています: ${item.id}`);
   }
 }
 
-// コードの標準出力そのものを答える問題。
 const directTextOutputIds = [
   "s1-q05", "s1-q07", "s1-q11",
   "s2-q02", "s2-q06", "s2-q10",
@@ -46,8 +105,6 @@ const directTextOutputIds = [
 ];
 const directSingleOutputIds = ["s1-q02", "s1-q13"];
 
-// すべての検証コードを1つのCPython process内で、独立globalsを使って実行する。
-// processを大量に起動しないため、CIや共有計算環境でも安定しやすい。
 const executionCases = new Map();
 for (const id of [...directTextOutputIds, ...directSingleOutputIds, "s3-q08", "s1-q09", "s5-q06"]) {
   const item = question(id);
@@ -133,7 +190,7 @@ for (const id of directSingleOutputIds) {
   assert(!result.errorType, `${id}のコードが${result.errorType}になりました: ${result.errorMessage}`);
   if (!result.errorType) {
     const selected = item.options[item.answer];
-    assert(canonicalAnswer(selected) === canonicalAnswer(result.stdout), `${id}の正答選択肢 ${JSON.stringify(selected)} と実出力 ${JSON.stringify(result.stdout)} が一致しません`);
+    assert(canonicalAnswer(selected) === canonicalAnswer(result.stdout), `${id}の正答選択肢と実出力が一致しません: ${JSON.stringify(result.stdout)}`);
   }
 }
 
@@ -191,6 +248,6 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`All ${QUIZ_DATA.questions.length} quiz records passed structural checks.`);
+console.log(`All ${QUESTION_DATA.questions.length} instructor-only quiz records and answer keys passed structural checks.`);
 console.log(`${directTextOutputIds.length + directSingleOutputIds.length} executable output questions matched their registered answers.`);
 console.log("Intentional SyntaxError, NameError, repaired-code, line-count, type, and NumPy shape cases passed.");

@@ -1,0 +1,113 @@
+.portal-body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 80% -10%, color-mix(in srgb, var(--primary) 16%, transparent), transparent 34rem),
+    radial-gradient(circle at 10% 18%, color-mix(in srgb, #6d69ff 14%, transparent), transparent 30rem),
+    var(--bg);
+}
+.portal-header {
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px clamp(14px, 3vw, 34px);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-elevated) 91%, transparent);
+  backdrop-filter: blur(16px);
+}
+.portal-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.portal-brand img { border-radius: 10px; }
+.portal-brand span { display: grid; line-height: 1.22; }
+.portal-brand strong { letter-spacing: .02em; }
+.portal-brand small { color: var(--text-muted); font-size: .72rem; }
+.portal-header-note { margin-left: auto; padding: 5px 9px; border: 1px solid var(--border); border-radius: 999px; color: var(--text-muted); font-size: .72rem; }
+.portal-main { width: min(980px, 100%); margin: 0 auto; padding: clamp(26px, 5vw, 54px) clamp(14px, 3vw, 30px) 72px; }
+.portal-title { display: grid; gap: 7px; margin-bottom: 22px; }
+.portal-title.compact { margin-top: 18px; }
+.portal-title h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.18; letter-spacing: -.03em; }
+.portal-title p { margin: 0; max-width: 74ch; color: var(--text-muted); }
+.portal-card { box-shadow: var(--shadow-soft); }
+.portal-summary { margin-bottom: 14px; }
+.portal-primary { min-height: 46px; }
+.portal-footnote { margin: 14px auto 0; max-width: 70ch; color: var(--text-faint); font-size: .78rem; text-align: center; }
+.quiz-sticky-bar {
+  position: sticky;
+  top: 10px;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 15px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-elevated) 94%, transparent);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(14px);
+}
+.quiz-sticky-bar > div:first-child { display: grid; }
+.quiz-sticky-bar small { color: var(--text-muted); }
+.quiz-timer { min-width: 84px; text-align: right; font: 900 1.35rem/1 ui-monospace, monospace; color: var(--accent); }
+.quiz-timer.urgent { color: var(--danger); animation: pulse 1s infinite; }
+.quiz-question-list { display: grid; gap: 14px; }
+.quiz-question-card h2 { margin: 9px 0 0; font-size: 1.1rem; line-height: 1.55; }
+.question-heading { display: flex; justify-content: space-between; gap: 10px; color: var(--text-muted); font-size: .76rem; font-weight: 750; }
+.question-heading span:first-child { color: var(--primary); }
+.quiz-submit-panel { margin-top: 17px; text-align: center; }
+.quiz-submit-panel p { color: var(--text-muted); }
+.result-card { text-align: center; }
+.result-mark { width: 66px; aspect-ratio: 1; display: grid; place-items: center; margin: 0 auto 12px; border-radius: 50%; background: color-mix(in srgb, var(--success) 14%, var(--surface-2)); color: var(--success); font-size: 2rem; font-weight: 900; }
+.result-score { display: grid; place-items: center; gap: 2px; margin: 18px 0; }
+.result-score strong { font-size: 2.25rem; }
+.result-score span { color: var(--text-muted); }
+.feedback-card { margin-top: 10px; }
+.feedback-card.correct { border-color: color-mix(in srgb, var(--success) 55%, var(--border)); }
+.feedback-card.incorrect { border-color: color-mix(in srgb, var(--danger) 55%, var(--border)); }
+
+.teacher-main { width: min(1500px, 100%); }
+.teacher-local-note { margin-bottom: 18px; }
+.teacher-grid { display: grid; grid-template-columns: minmax(390px, .9fr) minmax(500px, 1.1fr); gap: 18px; align-items: start; }
+.teacher-section { min-width: 0; }
+.teacher-form .form-field small { color: var(--text-faint); }
+.input-action-row { display: flex; gap: 8px; }
+.input-action-row .input { min-width: 0; }
+.generated-link-card { display: grid; gap: 12px; margin-top: 18px; padding: 16px; border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--border)); border-radius: var(--radius); background: color-mix(in srgb, var(--primary) 6%, var(--surface-2)); }
+.url-output { min-height: 92px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .76rem; }
+.link-summary { display: flex; flex-wrap: wrap; gap: 7px; }
+.link-summary span { padding: 5px 8px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-muted); font-size: .72rem; }
+.question-preview summary { cursor: pointer; color: var(--primary-strong); font-weight: 750; }
+.question-preview ol { display: grid; gap: 8px; padding-left: 1.5rem; }
+.upload-zone { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 16px; border: 1px dashed var(--border-strong); border-radius: var(--radius); background: var(--surface-2); }
+.upload-zone input[type="file"] { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; pointer-events: none; }
+.upload-zone span { color: var(--text-muted); }
+.teacher-actions { margin: 12px 0; }
+.teacher-results { min-height: 100px; }
+.teacher-table { min-width: 760px; }
+.teacher-table small { color: var(--text-muted); }
+.invalid-row { background: color-mix(in srgb, var(--danger) 5%, transparent); }
+.empty-state.compact { min-height: 120px; }
+.response-detail { scroll-margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+.detail-question-list { display: grid; gap: 10px; }
+.detail-question-list .feedback-card { margin: 0; }
+
+@media (max-width: 1040px) {
+  .teacher-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .portal-header-note { display: none; }
+  .portal-main { padding-top: 24px; }
+  .portal-title h1 { font-size: 2rem; }
+  .quiz-sticky-bar { top: 5px; align-items: flex-start; }
+  .quiz-timer { font-size: 1.15rem; }
+  .quiz-question-card .card-body { padding: 15px 13px; }
+  .portal-summary .metric-grid { grid-template-columns: 1fr 1fr; }
+  .input-action-row { align-items: stretch; flex-direction: column; }
+}
+
+@media print {
+  .portal-header, .teacher-actions, .upload-zone, #generatorForm, .generated-link-card .button-row { display: none !important; }
+  .portal-main { width: 100%; padding: 0; }
+  .teacher-grid { display: block; }
+  .teacher-section { margin-bottom: 18px; }
+}
