@@ -1,5 +1,6 @@
 import { COURSE_CONTENT } from "./content.js";
 import { SELF_STUDY } from "./self-study.js";
+import { LESSON_EXPLANATIONS, POST_STUDY } from "./lesson-extensions.js";
 import { CourseStore } from "./storage.js";
 import { PythonRuntime } from "./runtime.js";
 import {
@@ -23,7 +24,11 @@ const APP_VERSION = COURSE_CONTENT.meta.version;
 const LESSONS = [...COURSE_CONTENT.lessons].sort((a, b) => (a.session - b.session) || (a.order - b.order));
 const LESSON_BY_ID = new Map(LESSONS.map((lesson) => [lesson.id, lesson]));
 const SESSION_BY_ID = new Map(COURSE_CONTENT.sessions.map((session) => [Number(session.id), session]));
-const PRACTICES = LESSONS.flatMap((lesson) => lesson.practices.map((practice) => ({ ...practice, lesson })));
+const REGULAR_PRACTICES = LESSONS.flatMap((lesson) => lesson.practices.map((practice) => ({ ...practice, lesson, source: "lesson" })));
+const POST_STUDY_CODE_TASKS = LESSONS.flatMap((lesson) => (POST_STUDY[lesson.id] || [])
+  .filter((task) => task.kind === "code")
+  .map((task) => ({ ...task, lesson, source: "post-study" })));
+const PRACTICES = [...REGULAR_PRACTICES, ...POST_STUDY_CODE_TASKS];
 const PRACTICE_BY_ID = new Map(PRACTICES.map((practice) => [practice.id, practice]));
 
 const store = new CourseStore();
@@ -54,6 +59,7 @@ let runtimeInitialized = false;
 const saveDraftDebounced = debounce((lessonId, code) => store.setDraft(lessonId, code), 350);
 const savePredictionDebounced = debounce((lessonId, text) => store.setPrediction(lessonId, text), 350);
 const saveNoteDebounced = debounce((lessonId, text) => store.setLessonNote(lessonId, text), 350);
+const savePostStudyAnswerDebounced = debounce((taskId, text) => store.setPostStudyAnswer(taskId, text), 350);
 const saveExitDebounced = debounce((sessionId, text) => store.setExitTicket(sessionId, text), 350);
 
 function lessonNumber(lesson) {
@@ -353,6 +359,8 @@ function renderLessonDetail(lesson) {
   const done = snapshot.completedLessons.includes(lesson.id);
   const session = SESSION_BY_ID.get(Number(lesson.session));
   const study = SELF_STUDY[lesson.id];
+  const explanation = LESSON_EXPLANATIONS[lesson.id];
+  const postStudy = POST_STUDY[lesson.id] || [];
   const index = LESSONS.findIndex((item) => item.id === lesson.id);
   const previous = LESSONS[index - 1] ?? null;
   const next = LESSONS[index + 1] ?? null;
@@ -391,6 +399,23 @@ function renderLessonDetail(lesson) {
           <article class="study-intro">
             ${study.lead.map((paragraph) => `<p>${escapeHTML(paragraph)}</p>`).join("")}
           </article>
+          ${explanation ? `
+          <article class="card deep-explanation-card"><div class="card-body">
+            <div class="eyebrow">考え方をつかむ</div>
+            ${explanation.overview.map((paragraph) => `<p>${escapeHTML(paragraph)}</p>`).join("")}
+            <div class="syntax-anatomy-grid">
+              ${explanation.anatomy.map((item) => `<div class="syntax-anatomy-item"><code>${escapeHTML(item.part)}</code><p>${escapeHTML(item.meaning)}</p></div>`).join("")}
+            </div>
+          </div></article>
+          <article class="card trace-card"><div class="card-body">
+            <div class="eyebrow">処理を追跡する</div>
+            <h3>${escapeHTML(explanation.trace.title)}</h3>
+            ${codeBlock(explanation.trace.code)}
+            <div class="table-wrap"><table class="data-table trace-table"><thead><tr><th>段階</th><th>状態・出力</th><th>何が起きたか</th></tr></thead><tbody>
+              ${explanation.trace.rows.map((row) => `<tr><td>${escapeHTML(row[0])}</td><td><code>${escapeHTML(row[1])}</code></td><td>${escapeHTML(row[2])}</td></tr>`).join("")}
+            </tbody></table></div>
+            <div class="learning-checklist"><strong>実行前後に確認すること</strong><ul>${explanation.checklist.map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul></div>
+          </div></article>` : ""}
           <div class="study-rule-grid">
             ${study.grammar.map((rule, ruleIndex) => `
               <article class="card study-rule-card">
@@ -474,15 +499,42 @@ function renderLessonDetail(lesson) {
           </div>
         </section>
 
-        <section class="section">
-          <div class="section-heading"><div><h2>6. 事後学習</h2><p>コードを見ずに、自分の言葉で仕組みを説明します。書いてから解答例を開いて比べてください。</p></div></div>
-          ${lesson.afterClass.map((item, itemIndex) => `
-            <details class="card concept-card">
-              <summary>問${itemIndex + 1}. ${escapeHTML(item.question)}</summary>
-              <div class="concept-content"><p><strong>解答例：</strong>${escapeHTML(item.model)}</p></div>
-            </details>
-          `).join("")}
-          <label class="form-field" style="margin-top:12px"><span>自分の説明・疑問メモ</span><textarea class="textarea" data-save="lesson-note" data-lesson="${escapeAttribute(lesson.id)}" placeholder="分かったこと、まだ曖昧なこと、試した変更を記録します。">${escapeHTML(note)}</textarea></label>
+        <section class="section post-study-section">
+          <div class="section-heading"><div><h2>6. 事後学習：問題を解いて定着させる</h2><p>最初に自力で答え、必要なときだけヒントを開きます。知識確認の後、実際にコードを書いて自動判定まで行います。</p></div></div>
+          <div class="post-study-progress"><span>知識問題 ${postStudy.filter((task) => task.kind === "knowledge").length}問</span><span>コード問題 ${postStudy.filter((task) => task.kind === "code").length}問</span><span>ヒント・解答例あり</span></div>
+          <div class="post-study-list">
+            ${postStudy.map((task, taskIndex) => {
+              if (task.kind === "knowledge") {
+                const savedAnswer = snapshot.postStudyAnswers?.[task.id] ?? "";
+                return `<article class="card post-study-card knowledge-task"><div class="card-body">
+                  <div class="question-heading"><span>定着問題 ${taskIndex + 1}</span><span>知識・説明</span></div>
+                  <h3>${escapeHTML(task.title)}</h3>
+                  <p>${escapeHTML(task.prompt)}</p>
+                  <label class="form-field"><span>自分の答え</span><textarea class="textarea compact-answer" data-save="post-study-answer" data-task="${escapeAttribute(task.id)}" placeholder="まず資料を閉じ、自分の言葉で答えます。">${escapeHTML(savedAnswer)}</textarea></label>
+                  <div class="reveal-grid">
+                    <details><summary>ヒントを見る</summary><p>${escapeHTML(task.hint)}</p></details>
+                    <details><summary>解答例を見る</summary><p>${escapeHTML(task.answer)}</p></details>
+                  </div>
+                </div></article>`;
+              }
+              const attempt = snapshot.practiceAttempts[task.id];
+              return `<article class="card post-study-card code-task"><div class="card-body">
+                <div class="question-heading"><span>定着問題 ${taskIndex + 1}</span><span>コードを書く · ${attempt?.passed ? "合格済み" : "未合格"}</span></div>
+                <h3>${escapeHTML(task.title)}</h3>
+                <p>${escapeHTML(task.prompt)}</p>
+                <div class="button-row">
+                  <button class="button primary small" type="button" data-action="load-practice" data-practice="${escapeAttribute(task.id)}" data-editor="${escapeAttribute(editorId)}">開始コードを開く</button>
+                  <button class="button ghost small" type="button" data-action="show-hints" data-practice="${escapeAttribute(task.id)}">ヒント</button>
+                  <button class="button ghost small" type="button" data-action="show-solution" data-practice="${escapeAttribute(task.id)}">解答例</button>
+                </div>
+                <div data-practice-feedback="${escapeAttribute(task.id)}"></div>
+              </div></article>`;
+            }).join("")}
+          </div>
+          <details class="optional-note card"><summary>質問・振り返りメモ（任意）</summary><div class="card-body">
+            <p>疑問点、試した変更、次回確認したいことがある場合だけ記録します。事後学習の中心は上の問題演習です。</p>
+            <textarea class="textarea" data-save="lesson-note" data-lesson="${escapeAttribute(lesson.id)}" placeholder="例：append()が元のlistを変更する点は分かったが、sort()との違いを次回確認したい。">${escapeHTML(note)}</textarea>
+          </div></details>
         </section>
 
         <section class="section">
@@ -564,7 +616,7 @@ function renderPractice(route) {
     })}
     <div class="filter-bar">
       <label class="form-field"><span>回</span><select class="select" id="practiceSessionFilter"><option value="all">すべて</option>${COURSE_CONTENT.sessions.map((session) => `<option value="${session.id}" ${practiceFilters.session === String(session.id) ? "selected" : ""}>第${session.id}回 ${escapeHTML(session.title)}</option>`).join("")}</select></label>
-      <label class="form-field"><span>難度</span><select class="select" id="practiceDifficultyFilter"><option value="all">すべて</option>${["基礎", "標準", "発展"].map((value) => `<option value="${value}" ${practiceFilters.difficulty === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>
+      <label class="form-field"><span>難度</span><select class="select" id="practiceDifficultyFilter"><option value="all">すべて</option>${["基礎", "標準", "定着", "発展"].map((value) => `<option value="${value}" ${practiceFilters.difficulty === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>
       <label class="form-field"><span>検索</span><input class="input" id="practiceQuery" value="${escapeAttribute(practiceFilters.query)}" placeholder="例：range、欠損値"></label>
       <span class="help-text">${items.length}問表示</span>
     </div>
@@ -574,12 +626,12 @@ function renderPractice(route) {
         <nav class="practice-nav" aria-label="練習問題一覧">
           ${items.map((item) => {
             const attempt = snapshot.practiceAttempts[item.id];
-            return `<button type="button" class="${item.id === practice.id ? "active" : ""}" data-action="select-practice" data-practice="${escapeAttribute(item.id)}"><strong>${escapeHTML(item.title)}</strong><br><small>第${item.lesson.session}回 · ${escapeHTML(item.difficulty)} ${attempt?.passed ? "· ✓合格" : ""}</small></button>`;
+            return `<button type="button" class="${item.id === practice.id ? "active" : ""}" data-action="select-practice" data-practice="${escapeAttribute(item.id)}"><strong>${escapeHTML(item.title)}</strong><br><small>第${item.lesson.session}回 · ${item.source === "post-study" ? "事後学習 · " : ""}${escapeHTML(item.difficulty)} ${attempt?.passed ? "· ✓合格" : ""}</small></button>`;
           }).join("")}
         </nav>
         <section>
           <div class="card"><div class="card-body">
-            <div class="lesson-meta"><span class="badge core">第${practice.lesson.session}回</span><span class="badge ${snapshot.practiceAttempts[practice.id]?.passed ? "done" : "warning"}">${snapshot.practiceAttempts[practice.id]?.passed ? "合格済み" : escapeHTML(practice.difficulty)}</span><span>${snapshot.practiceAttempts[practice.id]?.attempts ?? 0}回実行</span></div>
+            <div class="lesson-meta"><span class="badge core">第${practice.lesson.session}回</span>${practice.source === "post-study" ? `<span class="badge advanced">事後学習</span>` : ""}<span class="badge ${snapshot.practiceAttempts[practice.id]?.passed ? "done" : "warning"}">${snapshot.practiceAttempts[practice.id]?.passed ? "合格済み" : escapeHTML(practice.difficulty)}</span><span>${snapshot.practiceAttempts[practice.id]?.attempts ?? 0}回実行</span></div>
             <h2>${escapeHTML(practice.title)}</h2>
             <p>${escapeHTML(practice.prompt)}</p>
             <div class="button-row" style="margin-top:12px"><button class="button ghost small" type="button" data-action="show-hints" data-practice="${escapeAttribute(practice.id)}">ヒント</button><button class="button ghost small" type="button" data-action="show-solution" data-practice="${escapeAttribute(practice.id)}">解答例</button><a class="button ghost small" href="#learn/${escapeAttribute(practice.lesson.id)}">対応lesson</a></div>
@@ -1030,7 +1082,7 @@ async function handleClick(event) {
     return;
   }
   if (action === "export-progress") {
-    const payload = { format: "lavi-spica-progress-v2", appVersion: APP_VERSION, exportedAt: new Date().toISOString(), state: store.snapshot() };
+    const payload = { format: "lavi-spica-progress-v3", appVersion: APP_VERSION, exportedAt: new Date().toISOString(), state: store.snapshot() };
     downloadJSON(payload, `lavi-spica-progress-${new Date().toISOString().slice(0, 10)}.json`);
     return;
   }
@@ -1064,6 +1116,10 @@ function handleInput(event) {
   }
   if (target.dataset.save === "lesson-note") {
     saveNoteDebounced(target.dataset.lesson, target.value);
+    return;
+  }
+  if (target.dataset.save === "post-study-answer") {
+    savePostStudyAnswerDebounced(target.dataset.task, target.value);
     return;
   }
   if (target.dataset.save === "exit") {
@@ -1128,7 +1184,7 @@ async function importProgressFile(file) {
   if (!file) return;
   try {
     const value = JSON.parse(await file.text());
-    const importedState = ["lavi-spica-progress-v2", "lavi-spica-progress-v1", "pycore-lab-progress-v1"].includes(value?.format) ? value.state : value;
+    const importedState = ["lavi-spica-progress-v3", "lavi-spica-progress-v2", "lavi-spica-progress-v1", "pycore-lab-progress-v1"].includes(value?.format) ? value.state : value;
     const confirmed = await showConfirm({ title: "進捗を読み込みますか", body: "<p>現在この端末にある進捗は、読み込んだ内容で置き換えられます。</p>", confirmLabel: "読み込む" });
     if (!confirmed) return;
     store.replace(importedState);
@@ -1191,5 +1247,7 @@ if (!location.hash) location.hash = "dashboard";
 else renderRoute();
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
-  navigator.serviceWorker.register("./sw.js").catch((error) => console.info("Service Worker registration skipped", error));
+  navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
+    .then((registration) => registration.update())
+    .catch((error) => console.info("Service Worker registration skipped", error));
 }

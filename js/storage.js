@@ -1,6 +1,6 @@
-const STORAGE_KEY = "lavi-spica:v2:student-state";
-const LEGACY_STORAGE_KEYS = ["lavi-spica:v1:state", "pycore-lab:v1:state"];
-const SCHEMA_VERSION = 2;
+const STORAGE_KEY = "lavi-spica:v3:student-state";
+const LEGACY_STORAGE_KEYS = ["lavi-spica:v2:student-state", "lavi-spica:v1:state", "pycore-lab:v1:state"];
+const SCHEMA_VERSION = 3;
 
 function initialState() {
   return {
@@ -9,6 +9,7 @@ function initialState() {
     lessonDrafts: {},
     lessonPredictions: {},
     lessonNotes: {},
+    postStudyAnswers: {},
     exitTickets: {},
     practiceAttempts: {},
     settings: { theme: "dark", fontScale: 1, reduceMotion: false },
@@ -29,6 +30,7 @@ function mergeState(value) {
     lessonDrafts: objectOrEmpty(value.lessonDrafts),
     lessonPredictions: objectOrEmpty(value.lessonPredictions),
     lessonNotes: objectOrEmpty(value.lessonNotes),
+    postStudyAnswers: objectOrEmpty(value.postStudyAnswers),
     exitTickets: objectOrEmpty(value.exitTickets),
     practiceAttempts: objectOrEmpty(value.practiceAttempts),
     settings: { ...base.settings, ...objectOrEmpty(value.settings) },
@@ -97,6 +99,10 @@ export class CourseStore extends EventTarget {
 
   setLessonNote(lessonId, text) {
     this.update((state) => { state.lessonNotes[lessonId] = String(text); });
+  }
+
+  setPostStudyAnswer(taskId, text) {
+    this.update((state) => { state.postStudyAnswers[String(taskId)] = String(text); });
   }
 
   setExitTicket(sessionId, text) {

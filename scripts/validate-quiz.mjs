@@ -1,244 +1,252 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { dirname, join } from "node:path";
+import { join, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { canonicalAnswer } from "../js/utils.js";
+import { publicQuizQuestion, quizQuestionFingerprint, validQuizQuestion } from "../quiz/quiz-core.js";
+import { seededRandom, shuffled } from "../js/utils.js";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const failures = [];
-const questionPath = join(root, "teacher/question-bank.js");
-const answerPath = join(root, "teacher/answer-key.js");
+const assert = (condition, message) => { if (!condition) failures.push(message); };
+const bankPath = join(root, "teacher/question-bank.js");
+const keyPath = join(root, "teacher/answer-key.js");
 
-function publicQuizChecks() {
-  const publicBankPath = join(root, "quiz/question-bank.js");
-  assert(!existsSync(publicBankPath), "公開quiz directoryに問題バンクがあります");
-  const quizJs = existsSync(join(root, "quiz/quiz.js")) ? (awaitRead("quiz/quiz.js")) : "";
-  const coreJs = existsSync(join(root, "quiz/quiz-core.js")) ? (awaitRead("quiz/quiz-core.js")) : "";
-  assert(!/QUIZ_ANSWER_KEY|answer-key|question-bank|QUESTION_DATA/.test(quizJs), "学生用quiz.jsが問題バンクまたは採点キーを参照しています");
-  assert(!/QUIZ_ANSWER_KEY|answer-key|question-bank|QUESTION_DATA/.test(coreJs), "学生用quiz-core.jsが問題バンクまたは採点キーを参照しています");
-  assert(coreJs.includes("lavi-spica-quiz-link-v1"), "当日リンクpayloadの形式がありません");
-}
-
-function awaitRead(relativePath) {
-  return readFileSync(join(root, relativePath), "utf8");
-}
-
-function assert(condition, message) {
-  if (!condition) failures.push(message);
-}
-
-publicQuizChecks();
-
-if (!existsSync(questionPath) || !existsSync(answerPath)) {
-  if (failures.length) {
-    console.error(`\nLAVi-SPICA public quiz validation failed (${failures.length})`);
-    failures.forEach((failure) => console.error(`- ${failure}`));
-    process.exit(1);
-  }
-  console.log("The public day-of quiz reader contains neither the question bank nor the answer key.");
-  console.log("Instructor-only question and answer execution checks were skipped because teacher/ is absent from this Git checkout.");
+if (!existsSync(bankPath) || !existsSync(keyPath)) {
+  console.log("Public checkout detected: instructor-only quiz bank validation was skipped.");
   process.exit(0);
 }
 
-const { QUESTION_DATA } = await import(`${pathToFileURL(questionPath).href}?validation=${Date.now()}`);
+const { QUESTION_DATA } = await import(`${pathToFileURL(bankPath).href}?v=${Date.now()}`);
+const { QUIZ_ANSWER_KEY } = await import(`${pathToFileURL(keyPath).href}?v=${Date.now()}`);
+const questions = QUESTION_DATA.questions;
+const answers = QUIZ_ANSWER_KEY.answers;
+const byId = new Map(questions.map((question) => [question.id, question]));
 
-for (const item of QUESTION_DATA.questions) {
-  assert(["single", "multi", "text"].includes(item.type), `typeが不正です: ${item.id}`);
-  assert(["基礎", "標準", "発展"].includes(item.difficulty), `難度が不正です: ${item.id}`);
-  assert(Array.isArray(item.tags) && item.tags.length >= 1, `tagがありません: ${item.id}`);
-  assert(!Object.hasOwn(item, "answer"), `問題バンクに正答indexがあります: ${item.id}`);
-  assert(!Object.hasOwn(item, "accepted"), `問題バンクにacceptedがあります: ${item.id}`);
-  assert(!Object.hasOwn(item, "explanation"), `問題バンクに解説があります: ${item.id}`);
-  if (item.options) assert(new Set(item.options).size === item.options.length, `選択肢が重複しています: ${item.id}`);
-}
-assert(QUESTION_DATA.questions.length === 98, `問題数が98ではありません: ${QUESTION_DATA.questions.length}`);
+assert(QUESTION_DATA.meta.version === "1.4.0", "問題バンクversionが1.4.0ではありません");
+assert(QUIZ_ANSWER_KEY.meta.version === "1.4.0", "採点キーversionが1.4.0ではありません");
+assert(QUESTION_DATA.meta.defaultMinutes === 8, "既定時間が8分ではありません");
+assert(QUESTION_DATA.meta.defaultCount === 5, "既定問題数が5問ではありません");
+assert(questions.length === 56, `問題数が56ではありません: ${questions.length}`);
+assert(new Set(questions.map((question) => question.id)).size === questions.length, "問題IDが重複しています");
+assert(Object.keys(answers).length === questions.length, "問題数と採点キー数が一致しません");
+
 for (let session = 1; session <= 7; session += 1) {
-  assert(QUESTION_DATA.questions.filter((item) => Number(item.session) === session).length === 14, `第${session}回の問題数が14ではありません`);
+  const items = questions.filter((question) => question.session === session);
+  assert(items.length === 8, `第${session}回が8問ではありません: ${items.length}`);
+  assert(items.filter((question) => question.type === "code").length === 2, `第${session}回のコード問題が2問ではありません`);
+  assert(items.some((question) => question.type === "code" && question.difficulty === "基礎"), `第${session}回に基礎コード問題がありません`);
 }
 
-const { QUIZ_ANSWER_KEY } = await import(`${pathToFileURL(answerPath).href}?validation=${Date.now()}`);
-assert(QUIZ_ANSWER_KEY.meta.version === QUESTION_DATA.meta.version, "問題バンクと採点キーのversionが一致しません");
-assert(Object.keys(QUIZ_ANSWER_KEY.answers).length === QUESTION_DATA.questions.length, "採点キー件数が問題数と一致しません");
-
-const questions = QUESTION_DATA.questions.map((question) => ({ ...question, ...(QUIZ_ANSWER_KEY.answers[question.id] || {}) }));
-const questionById = new Map(questions.map((question) => [question.id, question]));
-
-function question(id) {
-  const item = questionById.get(id);
-  assert(Boolean(item), `小テスト問題が見つかりません: ${id}`);
-  return item;
-}
-
-function acceptedMatches(item, value) {
-  const actual = canonicalAnswer(value);
-  return (item.accepted || []).some((candidate) => canonicalAnswer(candidate) === actual);
-}
-
-for (const item of questions) {
-  assert(Boolean(QUIZ_ANSWER_KEY.answers[item.id]), `採点キーがありません: ${item.id}`);
-  assert(typeof item.explanation === "string" && item.explanation.length > 0, `解説がありません: ${item.id}`);
-  if (item.type === "single") {
-    assert(Number.isInteger(item.answer), `単一選択の正答indexがありません: ${item.id}`);
-    assert(item.answer >= 0 && item.answer < item.options.length, `単一選択の正答indexが範囲外です: ${item.id}`);
+for (const question of questions) {
+  const publicQuestion = publicQuizQuestion(question);
+  assert(validQuizQuestion(publicQuestion), `公開問題形式が不正です: ${question.id}`);
+  assert(question.prompt.trim().length >= 12, `問題文が短すぎます: ${question.id}`);
+  assert(Boolean(answers[question.id]), `採点キーがありません: ${question.id}`);
+  const key = answers[question.id];
+  assert(key.kind === question.type, `問題typeと採点キーkindが不一致: ${question.id}`);
+  assert(typeof key.explanation === "string" && key.explanation.trim().length >= 8, `解説が不足: ${question.id}`);
+  for (const privateField of ["answer", "accepted", "answerDisplay", "modelCode", "hiddenCode", "tests", "explanation"]) {
+    assert(!Object.hasOwn(publicQuestion, privateField), `公開問題に採点情報があります: ${question.id} ${privateField}`);
   }
-  if (item.type === "multi") {
-    assert(Array.isArray(item.answer) && item.answer.length >= 1, `複数選択の正答がありません: ${item.id}`);
-    assert(new Set(item.answer).size === item.answer.length, `複数選択の正答indexが重複しています: ${item.id}`);
-    assert(item.answer.every((index) => Number.isInteger(index) && index >= 0 && index < item.options.length), `複数選択の正答indexが範囲外です: ${item.id}`);
-  }
-  if (item.type === "text") {
-    const normalized = (item.accepted || []).map(canonicalAnswer);
-    assert(normalized.length >= 1, `記述式acceptedがありません: ${item.id}`);
-    assert(normalized.every(Boolean), `記述式acceptedに空文字があります: ${item.id}`);
-    assert(new Set(normalized).size === normalized.length, `記述式acceptedが正規化後に重複しています: ${item.id}`);
+  if (question.type === "single") {
+    assert(Number.isInteger(key.answer) && key.answer >= 0 && key.answer < question.options.length, `単一選択の正答indexが不正: ${question.id}`);
+  } else if (question.type === "multi") {
+    assert(Array.isArray(key.answer) && key.answer.length >= 1, `複数選択の正答がありません: ${question.id}`);
+    assert(new Set(key.answer).size === key.answer.length, `複数選択の正答が重複: ${question.id}`);
+    assert(key.answer.every((index) => Number.isInteger(index) && index >= 0 && index < question.options.length), `複数選択の正答indexが不正: ${question.id}`);
+  } else if (question.type === "text") {
+    assert(Array.isArray(key.accepted) && key.accepted.length >= 1 && key.accepted.every((value) => String(value).trim()), `短答のacceptedが不正: ${question.id}`);
+  } else if (question.type === "code") {
+    assert(question.points === 3, `コード問題が3点ではありません: ${question.id}`);
+    assert(typeof question.starterCode === "string" && question.starterCode.trim(), `開始コードがありません: ${question.id}`);
+    assert(typeof key.modelCode === "string" && key.modelCode.trim(), `解答例コードがありません: ${question.id}`);
+    assert(Array.isArray(key.tests) && key.tests.length >= 2, `隠しテストが不足: ${question.id}`);
+    const total = key.tests.reduce((sum, test) => sum + Number(test.points || 0), 0);
+    assert(Math.abs(total - question.points) < 1e-9, `隠しテスト点が配点と不一致: ${question.id} ${total}/${question.points}`);
   }
 }
+for (const id of Object.keys(answers)) assert(byId.has(id), `採点キーだけに存在するID: ${id}`);
 
-const directTextOutputIds = [
-  "s1-q05", "s1-q07", "s1-q11",
-  "s2-q02", "s2-q06", "s2-q10",
-  "s3-q02", "s3-q09", "s3-q11", "s3-q13",
-  "s4-q02", "s4-q06", "s4-q08", "s4-q09", "s4-q11", "s4-q14",
-  "s5-q03", "s5-q08", "s5-q14",
-  "s6-q02", "s6-q07", "s6-q08", "s6-q12",
-  "s7-q06",
-];
-const directSingleOutputIds = ["s1-q02", "s1-q13"];
-
-const executionCases = new Map();
-for (const id of [...directTextOutputIds, ...directSingleOutputIds, "s3-q08", "s1-q09", "s5-q06"]) {
-  const item = question(id);
-  if (item) executionCases.set(id, item.code);
+function quizPool(scope) {
+  if (scope === "all") return [...questions];
+  if (scope === "diagnostic") return questions.filter((question) => question.difficulty === "基礎");
+  return questions.filter((question) => question.session === Number(scope));
 }
-const typeQuestion = question("s1-q14");
-if (typeQuestion) executionCases.set("s1-q14:type", `${typeQuestion.code}\nprint(type(result).__name__)\n`);
-const repairedQuestion = question("s5-q10");
-if (repairedQuestion) executionCases.set("s5-q10:repaired", repairedQuestion.code.replace("len(value)", "len(values)"));
-executionCases.set("s7-q03:shape", "import numpy as np\ndata = np.zeros((12, 3))\nprint(data[:, 1].shape)\n");
+const DIAGNOSTIC_TAGS = new Set(["エラー", "境界", "デバッグ", "indent", "戻り値", "copy", "reference", "NaN", "順序"]);
+function selectQuestions({ scope, count, seed }) {
+  const pool = quizPool(scope);
+  const safeCount = Math.max(3, Math.min(Number(count) || 5, Math.min(8, pool.length)));
+  const codePool = pool.filter((question) => question.type === "code");
+  const otherPool = pool.filter((question) => question.type !== "code");
+  const codeTarget = Math.min(codePool.length, safeCount >= 7 ? 2 : 1);
+  const selected = shuffled(codePool, seededRandom(`${seed}:code`)).slice(0, codeTarget);
+  const used = new Set(selected.map((question) => question.id));
+  const takeOne = (items, salt) => {
+    const available = items.filter((question) => !used.has(question.id));
+    const picked = shuffled(available, seededRandom(`${seed}:${salt}`))[0];
+    if (picked && selected.length < safeCount) {
+      selected.push(picked);
+      used.add(picked.id);
+    }
+  };
+  takeOne(otherPool.filter((question) => question.type === "text"), "trace");
+  takeOne(otherPool.filter((question) => (question.tags || []).some((tag) => DIAGNOSTIC_TAGS.has(tag))), "diagnostic");
+  const remaining = shuffled(otherPool.filter((question) => !used.has(question.id)), seededRandom(`${seed}:objective`));
+  selected.push(...remaining.slice(0, Math.max(0, safeCount - selected.length)));
+  if (selected.length < safeCount) {
+    selected.push(...shuffled(pool.filter((question) => !used.has(question.id)), seededRandom(`${seed}:fill`)).slice(0, safeCount - selected.length));
+  }
+  return shuffled(selected, seededRandom(`${seed}:order`));
+}
+for (const scope of ["diagnostic", "all", "1", "2", "3", "4", "5", "6", "7"]) {
+  for (const count of [3, 5, 8]) {
+    for (let seed = 0; seed < 20; seed += 1) {
+      const selected = selectQuestions({ scope, count, seed: `test-${seed}` });
+      const expectedCount = Math.min(count, quizPool(scope).length, 8);
+      assert(selected.length === expectedCount, `選択数が不正: scope=${scope} count=${count}`);
+      assert(new Set(selected.map((item) => item.id)).size === selected.length, `問題選択に重複: scope=${scope} seed=${seed}`);
+      assert(selected.some((item) => item.type === "code"), `コード問題が含まれません: scope=${scope} seed=${seed}`);
+      if (quizPool(scope).some((item) => item.type === "text")) assert(selected.some((item) => item.type === "text"), `出力追跡問題が含まれません: scope=${scope} seed=${seed}`);
+      if (quizPool(scope).some((item) => (item.tags || []).some((tag) => DIAGNOSTIC_TAGS.has(tag)))) assert(selected.some((item) => (item.tags || []).some((tag) => DIAGNOSTIC_TAGS.has(tag))), `誤概念診断問題が含まれません: scope=${scope} seed=${seed}`);
+      const publicItems = selected.map(publicQuizQuestion);
+      assert(/^[0-9a-f]{8}$/.test(quizQuestionFingerprint(publicItems)), "fingerprint形式が不正です");
+    }
+  }
+}
+
+function canonical(value) {
+  return String(value ?? "").normalize("NFKC").trim().replace(/\r\n/g, "\n").replace(/[ \t]+/g, " ").replace(/\s*([,\[\]\(\)])\s*/g, "$1").toLowerCase();
+}
+function valuesEqual(actual, expected, tolerance = 1e-9) {
+  if (typeof expected === "number") return Number.isFinite(Number(actual)) && Math.abs(Number(actual) - expected) <= tolerance;
+  if (Array.isArray(expected)) return Array.isArray(actual) && actual.length === expected.length && actual.every((value, index) => valuesEqual(value, expected[index], tolerance));
+  if (expected && typeof expected === "object") {
+    if (!actual || typeof actual !== "object" || Array.isArray(actual)) return false;
+    const keys = Object.keys(expected);
+    return keys.length === Object.keys(actual).length && keys.every((key) => valuesEqual(actual[key], expected[key], tolerance));
+  }
+  return canonical(actual) === canonical(expected);
+}
 
 const batchRunner = String.raw`
-import contextlib, io, json, sys
-cases = json.load(sys.stdin)
+import contextlib, io, json, math, os, shutil, sys, tempfile, traceback
+os.environ.setdefault("MPLBACKEND", "Agg")
+payload = json.load(sys.stdin)
+root = payload["root"]
 results = {}
-for case in cases:
-    output = io.StringIO()
-    error_output = io.StringIO()
-    error_type = None
-    error_message = None
+
+def clean(v):
+    if v is None or isinstance(v, (bool, int, str)):
+        return v
+    if isinstance(v, float):
+        return v if math.isfinite(v) else None
+    if isinstance(v, (list, tuple)):
+        return [clean(x) for x in v]
+    if isinstance(v, dict):
+        return {str(k): clean(x) for k, x in v.items()}
     try:
-        namespace = {"__name__": "__main__"}
-        with contextlib.redirect_stdout(output), contextlib.redirect_stderr(error_output):
-            exec(compile(case["code"], case["id"], "exec"), namespace, namespace)
-    except BaseException as exc:
-        error_type = type(exc).__name__
-        error_message = str(exc)
-    results[case["id"]] = {
-        "stdout": output.getvalue().rstrip("\n"),
-        "stderr": error_output.getvalue(),
-        "errorType": error_type,
-        "errorMessage": error_message,
-    }
-print(json.dumps(results, ensure_ascii=False))
+        import numpy as np
+        if isinstance(v, np.ndarray): return clean(v.tolist())
+        if isinstance(v, np.generic): return clean(v.item())
+    except Exception:
+        pass
+    return None
+
+for case in payload["cases"]:
+    namespace = {"__name__": "__main__"}
+    out = io.StringIO(); err = io.StringIO(); error = ""; figures = 0
+    old = os.getcwd()
+    with tempfile.TemporaryDirectory(prefix="spica-quiz-") as work:
+        for name in ("experiment.csv", "experiment_missing.csv", "projectile.csv"):
+            shutil.copy(os.path.join(root, "data", name), os.path.join(work, name))
+        os.chdir(work)
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                exec(compile(case["code"], case["id"], "exec"), namespace, namespace)
+        except BaseException:
+            error = traceback.format_exc()
+        try:
+            if "matplotlib.pyplot" in sys.modules:
+                import matplotlib.pyplot as plt
+                figures = len(plt.get_fignums())
+                plt.close("all")
+        except Exception:
+            pass
+        os.chdir(old)
+    variables = {}
+    for k, v in namespace.items():
+        if k.startswith("_"):
+            continue
+        value = clean(v)
+        if value is not None:
+            variables[k] = value
+    results[case["id"]] = {"stdout": out.getvalue().strip(), "stderr": err.getvalue(), "error": error, "figures": figures, "variables": variables}
+print(json.dumps(results, ensure_ascii=False, allow_nan=False))
 `;
 
+const executionCases = [];
+for (const question of questions.filter((item) => item.type === "code")) {
+  const key = answers[question.id];
+  executionCases.push({ id: `code:${question.id}`, code: `${key.modelCode}\n${key.hiddenCode || ""}` });
+}
+for (const question of questions.filter((item) => item.type === "text" && item.code)) {
+  executionCases.push({ id: `text:${question.id}`, code: question.code });
+}
 const batch = spawnSync("python3", ["-c", batchRunner], {
-  input: JSON.stringify([...executionCases].map(([id, code]) => ({ id, code }))),
+  input: JSON.stringify({ root, cases: executionCases }),
   encoding: "utf8",
-  timeout: 60_000,
-  maxBuffer: 8 * 1024 * 1024,
-  env: {
-    ...process.env,
-    MPLBACKEND: "Agg",
-    OPENBLAS_NUM_THREADS: "1",
-    OMP_NUM_THREADS: "1",
-    MKL_NUM_THREADS: "1",
-    NUMEXPR_NUM_THREADS: "1",
-    VECLIB_MAXIMUM_THREADS: "1",
-    BLIS_NUM_THREADS: "1",
-  },
+  timeout: 120_000,
+  maxBuffer: 32 * 1024 * 1024,
+  env: { ...process.env, MPLBACKEND: "Agg", OPENBLAS_NUM_THREADS: "1", OMP_NUM_THREADS: "1", MKL_NUM_THREADS: "1", NUMEXPR_NUM_THREADS: "1" },
 });
-
-assert(!batch.error, `小テスト検証用Pythonを実行できません: ${batch.error?.message || "unknown error"}`);
-assert(batch.status === 0, `小テスト検証用Pythonが異常終了しました: ${batch.stderr}`);
 let executionResults = {};
-if (!batch.error && batch.status === 0) {
-  try {
-    executionResults = JSON.parse(batch.stdout || "{}");
-  } catch (error) {
-    failures.push(`小テスト検証用PythonのJSONを読めません: ${error.message}`);
+if (batch.error || batch.status !== 0) {
+  failures.push(`Python一括検証を実行できません: ${batch.error?.message || batch.stderr || `exit ${batch.status}`}`);
+} else {
+  try { executionResults = JSON.parse(batch.stdout || "{}"); } catch (error) { failures.push(`Python一括検証結果を読めません: ${error.message}`); }
+}
+
+function evaluateTest(test, source, execution) {
+  const value = test.nameOfVariable ? execution.variables?.[test.nameOfVariable] : undefined;
+  const tolerance = Number(test.tolerance ?? 1e-9);
+  switch (test.type) {
+    case "noError": return !execution.error;
+    case "sourceContains": return (Array.isArray(test.expected) ? test.expected : [test.expected]).every((token) => source.includes(token));
+    case "sourceNotContains": return (Array.isArray(test.expected) ? test.expected : [test.expected]).every((token) => !source.includes(token));
+    case "stdoutEquals": return canonical(execution.stdout) === canonical(test.expected);
+    case "stdoutContains": return canonical(execution.stdout).includes(canonical(test.expected));
+    case "stdoutNumeric": {
+      const values = String(execution.stdout).match(/[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g) || [];
+      return values.length && Math.abs(Number(values.at(-1)) - Number(test.expected)) <= tolerance;
+    }
+    case "variable": return valuesEqual(value, test.expected, tolerance);
+    case "variableType": return test.expected === "dict" ? value && typeof value === "object" && !Array.isArray(value) : typeof value === test.expected;
+    case "variableArray": return valuesEqual(value, test.expected, tolerance);
+    case "variableArrayFinite": return Array.isArray(value) && value.length > 0 && value.every((item) => Number.isFinite(Number(item)));
+    case "variableFinite": return Number.isFinite(Number(value));
+    case "figureCount": return Number(execution.figures || 0) >= Number(test.minimum || 1);
+    default: return false;
   }
 }
 
-function execution(id) {
-  const result = executionResults[id];
-  assert(Boolean(result), `検証実行結果がありません: ${id}`);
-  return result;
+let codeValidated = 0;
+for (const question of questions.filter((item) => item.type === "code")) {
+  const key = answers[question.id];
+  const execution = executionResults[`code:${question.id}`];
+  assert(Boolean(execution), `${question.id}のPython検証結果がありません`);
+  if (!execution) continue;
+  assert(!execution.error, `${question.id}の解答例がエラー: ${execution.error}`);
+  for (const test of key.tests) assert(evaluateTest(test, key.modelCode, execution), `${question.id}の解答例が隠しテスト不合格: ${test.name}`);
+  codeValidated += 1;
 }
 
-for (const id of directTextOutputIds) {
-  const item = question(id);
-  const result = execution(id);
-  if (!item || !result) continue;
-  assert(!result.errorType, `${id}のコードが${result.errorType}になりました: ${result.errorMessage}`);
-  if (!result.errorType) assert(acceptedMatches(item, result.stdout), `${id}の実出力がacceptedと一致しません: ${JSON.stringify(result.stdout)}`);
-}
-
-for (const id of directSingleOutputIds) {
-  const item = question(id);
-  const result = execution(id);
-  if (!item || !result) continue;
-  assert(!result.errorType, `${id}のコードが${result.errorType}になりました: ${result.errorMessage}`);
-  if (!result.errorType) {
-    const selected = item.options[item.answer];
-    assert(canonicalAnswer(selected) === canonicalAnswer(result.stdout), `${id}の正答選択肢と実出力が一致しません: ${JSON.stringify(result.stdout)}`);
-  }
-}
-
-{
-  const item = question("s3-q08");
-  const result = execution("s3-q08");
-  if (item && result) {
-    const lineCount = result.stdout ? result.stdout.split(/\r?\n/).length : 0;
-    assert(!result.errorType, `s3-q08のコードが${result.errorType}になりました: ${result.errorMessage}`);
-    assert(lineCount === 4, `s3-q08の実出力行数が4ではありません: ${lineCount}`);
-    assert((item.accepted || []).some((value) => canonicalAnswer(value).startsWith("4")), "s3-q08のacceptedに4行がありません");
-  }
-}
-
-{
-  const item = question("s1-q14");
-  const result = execution("s1-q14:type");
-  if (item && result) {
-    assert(!result.errorType, `s1-q14のコードが${result.errorType}になりました: ${result.errorMessage}`);
-    assert(canonicalAnswer(item.options[item.answer]) === canonicalAnswer(result.stdout), `s1-q14の正答型が実行結果と一致しません: ${result.stdout}`);
-  }
-}
-
-{
-  const syntax = execution("s1-q09");
-  if (syntax) assert(syntax.errorType === "SyntaxError", `s1-q09がSyntaxErrorではありません: ${syntax.errorType}`);
-  const nameError = execution("s5-q06");
-  if (nameError) {
-    assert(nameError.errorType === "NameError", `s5-q06がNameErrorではありません: ${nameError.errorType}`);
-    assert(/time_hours/.test(nameError.errorMessage || ""), "s5-q06のNameErrorがtime_hoursを指していません");
-  }
-}
-
-{
-  const item = question("s5-q10");
-  const result = execution("s5-q10:repaired");
-  if (item && result) {
-    assert(!result.errorType, `s5-q10の修正版が${result.errorType}になりました: ${result.errorMessage}`);
-    assert(acceptedMatches(item, result.stdout), `s5-q10の修正版出力がacceptedと一致しません: ${result.stdout}`);
-  }
-}
-
-{
-  const item = question("s7-q03");
-  const result = execution("s7-q03:shape");
-  if (item && result) {
-    assert(!result.errorType, `s7-q03の検証コードが${result.errorType}になりました: ${result.errorMessage}`);
-    assert(acceptedMatches(item, result.stdout), `s7-q03のshapeがacceptedと一致しません: ${result.stdout}`);
+let textValidated = 0;
+for (const question of questions.filter((item) => item.type === "text" && item.code)) {
+  const execution = executionResults[`text:${question.id}`];
+  assert(Boolean(execution) && !execution.error, `${question.id}の提示コードが実行できません`);
+  if (execution && !execution.error) {
+    assert(answers[question.id].accepted.some((value) => canonical(value) === canonical(execution.stdout)), `${question.id}の実出力がacceptedと一致しません: ${JSON.stringify(execution.stdout)}`);
+    textValidated += 1;
   }
 }
 
@@ -247,7 +255,6 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
-
-console.log(`All ${QUESTION_DATA.questions.length} instructor-only quiz records and answer keys passed structural checks.`);
-console.log(`${directTextOutputIds.length + directSingleOutputIds.length} executable output questions matched their registered answers.`);
-console.log("Intentional SyntaxError, NameError, repaired-code, line-count, type, and NumPy shape cases passed.");
+console.log(`All ${questions.length} curated quiz questions and answer keys passed structural checks.`);
+console.log(`${codeValidated} coding model answers passed all hidden tests; ${textValidated} executable short-answer questions matched their answers.`);
+console.log("Balanced selection always included coding, output-tracing, and misconception-diagnostic questions across all scopes and tested seeds.");

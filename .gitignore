@@ -4,5 +4,12 @@ node_modules/
 .vscode/
 .idea/
 
-# Instructor-only local tools and answer key
+# Instructor-only local grading tools and answer keys
 teacher/
+
+# Private Google Apps Script source and deployment instructions
+gas/
+
+# Local instructor launchers and machine-specific cloud URL
+open-teacher.command
+.spica-cloud-url

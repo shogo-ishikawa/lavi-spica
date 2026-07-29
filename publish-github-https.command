@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 APP_NAME="LAVi-SPICA"
-VERSION="$(cat VERSION 2>/dev/null || printf '1.1.0')"
+VERSION="$(cat VERSION 2>/dev/null || printf '1.4.0')"
 COMMIT_MESSAGE="Update ${APP_NAME} to v${VERSION}"
 
 printf '\n%s\n' "${APP_NAME} v${VERSION} — GitHub HTTPS push"
@@ -26,9 +26,18 @@ else
   git branch -M main
 fi
 
-for protected_file in teacher/teacher.js teacher/question-bank.js teacher/answer-key.js; do
+for protected_file in \
+  teacher/teacher.js \
+  teacher/question-bank.js \
+  teacher/answer-key.js \
+  gas/backend/QuestionBank.gs \
+  gas/backend/TeacherApi.gs \
+  gas/gateway/Teacher.html \
+  open-teacher.command \
+  .spica-cloud-url
+do
   if ! git check-ignore -q "$protected_file" 2>/dev/null; then
-    printf '%s\n' "Error: teacher/ is not excluded by .gitignore. Push was stopped to protect instructor-only files." >&2
+    printf '%s\n' "Error: instructor-only files are not excluded by .gitignore. Push was stopped." >&2
     exit 1
   fi
 done
@@ -91,8 +100,8 @@ fi
 
 git add -A
 
-if [ -n "$(git ls-files 'teacher/*')" ]; then
-  printf '%s\n' "Error: instructor-only files under teacher/ are staged or tracked. Push was stopped." >&2
+if [ -n "$(git ls-files 'teacher/*' 'gas/*' 'open-teacher.command' '.spica-cloud-url')" ]; then
+  printf '%s\n' "Error: instructor-only or private cloud files are staged or tracked. Push was stopped." >&2
   exit 1
 fi
 
@@ -106,7 +115,7 @@ git branch -M main
 
 if [ "${SPICA_PREPARE_ONLY:-0}" = "1" ]; then
   printf '\n%s\n' "Prepared the local Git commit. Push was skipped because SPICA_PREPARE_ONLY=1."
-  printf '%s\n' "The teacher/ directory remains only on this computer."
+  printf '%s\n' "The teacher/, gas/, launcher, and local cloud URL remain only on this computer."
   exit 0
 fi
 
@@ -114,5 +123,5 @@ printf '\n%s\n' "Pushing to GitHub over HTTPS..."
 git push -u origin main
 
 printf '\n%s\n' "Push completed."
-printf '%s\n' "The student app is in the repository; teacher/ and its answer key remain local."
+printf '%s\n' "The student app is in the repository; teacher/, gas/, answer keys, and cloud configuration remain local."
 printf '%s\n' "For GitHub Pages, set Settings → Pages → Source to GitHub Actions."
