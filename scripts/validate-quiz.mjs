@@ -22,8 +22,8 @@ const questions = QUESTION_DATA.questions;
 const answers = QUIZ_ANSWER_KEY.answers;
 const byId = new Map(questions.map((question) => [question.id, question]));
 
-assert(QUESTION_DATA.meta.version === "1.4.0", "問題バンクversionが1.4.0ではありません");
-assert(QUIZ_ANSWER_KEY.meta.version === "1.4.0", "採点キーversionが1.4.0ではありません");
+assert(QUESTION_DATA.meta.version === "1.5.0", "問題バンクversionが1.5.0ではありません");
+assert(QUIZ_ANSWER_KEY.meta.version === "1.5.0", "採点キーversionが1.5.0ではありません");
 assert(QUESTION_DATA.meta.defaultMinutes === 8, "既定時間が8分ではありません");
 assert(QUESTION_DATA.meta.defaultCount === 5, "既定問題数が5問ではありません");
 assert(questions.length === 56, `問題数が56ではありません: ${questions.length}`);

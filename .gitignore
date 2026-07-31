@@ -7,9 +7,9 @@ node_modules/
 # Instructor-only local grading tools and answer keys
 teacher/
 
-# Private Google Apps Script source and deployment instructions
-gas/
+# Private Firebase project, rules, cloud console and deployment settings
+firebase/
 
-# Local instructor launchers and machine-specific cloud URL
+# Local instructor launcher and machine-specific cloud URL
 open-teacher.command
 .spica-cloud-url

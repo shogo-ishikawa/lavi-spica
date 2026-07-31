@@ -1,6 +1,6 @@
 {
   "name": "lavi-spica",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "type": "module",
   "description": "LAVi-SPICA — browser-based Python foundations for beginners",
@@ -10,8 +10,9 @@
     "validate:solutions": "node scripts/validate-solutions.mjs",
     "validate:quiz": "node scripts/validate-quiz.mjs",
     "test": "npm run verify",
-    "verify": "npm run check && npm run validate:solutions && npm run validate:quiz && npm run validate:gas",
-    "validate:gas": "node scripts/validate-gas.mjs"
+    "verify": "npm run verify:public && npm run validate:firebase",
+    "validate:firebase": "node scripts/validate-firebase.mjs",
+    "verify:public": "npm run check && npm run validate:solutions && npm run validate:quiz"
   },
   "engines": {
     "node": ">=20"

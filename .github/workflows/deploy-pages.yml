@@ -39,7 +39,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Verify public learning content
-        run: npm run verify
+        run: npm run verify:public
 
       - name: Prepare public site
         run: |

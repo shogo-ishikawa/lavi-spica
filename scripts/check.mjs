@@ -20,12 +20,12 @@ const publicFiles = [
   "assets/lavi-spica-hero.png", "data/experiment.csv", "data/experiment_missing.csv", "data/projectile.csv",
   "README.md", "docs/STUDENT_GUIDE.md", "VERSION", "LICENSE", ".gitattributes", ".gitignore", ".nojekyll",
   "package.json", "package-lock.json", "publish-github-https.command", ".github/workflows/deploy-pages.yml",
-  "scripts/check.mjs", "scripts/validate-solutions.mjs", "scripts/validate-quiz.mjs", "scripts/validate-gas.mjs",
+  "scripts/check.mjs", "scripts/validate-solutions.mjs", "scripts/validate-quiz.mjs", "scripts/validate-firebase.mjs",
 ];
 for (const path of publicFiles) assert(existsSync(join(root, path)), `必須ファイルがありません: ${path}`);
 
 const version = read("VERSION").trim();
-assert(version === "1.4.0", `想定versionは1.4.0です: ${version}`);
+assert(version === "1.5.0", `想定versionは1.5.0です: ${version}`);
 assert(COURSE_CONTENT.meta.version === version, "COURSE_CONTENTとVERSIONが一致しません");
 assert(JSON.parse(read("package.json")).version === version, "package.jsonとVERSIONが一致しません");
 assert(JSON.parse(read("package-lock.json")).version === version, "package-lock.jsonとVERSIONが一致しません");
@@ -97,7 +97,7 @@ assert(!validateParticipantProfile({ studentId: "TEST-invalid", name: "教員テ
 const gitignore = read(".gitignore");
 assert(/(^|\n)teacher\/(\n|$)/.test(gitignore), "teacher/が.gitignoreにありません");
 assert(/(^|\n)open-teacher\.command(\n|$)/.test(gitignore), "open-teacher.commandが.gitignoreにありません");
-assert(/(^|\n)gas\/(\n|$)/.test(gitignore), "gas/が.gitignoreにありません");
+assert(/(^|\n)firebase\/(\n|$)/.test(gitignore), "firebase/が.gitignoreにありません");
 assert(/(^|\n)\.spica-cloud-url(\n|$)/.test(gitignore), ".spica-cloud-urlが.gitignoreにありません");
 if (existsSync(join(root, "teacher"))) {
   for (const path of ["teacher/index.html", "teacher/teacher.js", "teacher/question-bank.js", "teacher/answer-key.js", "teacher/GUIDE.md", "open-teacher.command"]) {

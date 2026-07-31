@@ -1,4 +1,4 @@
-const CACHE_NAME = "lavi-spica-v1.4.0-r2";
+const CACHE_NAME = "lavi-spica-v1.5.0-r2";
 const APP_SHELL = [
   "./",
   "./index.html",

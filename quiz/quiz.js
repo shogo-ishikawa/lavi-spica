@@ -105,12 +105,16 @@ function allowedBridgeOrigin(origin) {
   try {
     const url = new URL(origin);
     const host = url.hostname.toLowerCase();
-    return url.protocol === "https:" && (
-      host === "script.google.com"
+    const secureCloudHost = (
+      host.endsWith(".web.app")
+      || host.endsWith(".firebaseapp.com")
+      || host === "script.google.com"
       || host.endsWith(".script.google.com")
       || host === "script.googleusercontent.com"
       || host.endsWith(".script.googleusercontent.com")
     );
+    const localDevelopment = (host === "localhost" || host === "127.0.0.1") && (url.protocol === "http:" || url.protocol === "https:");
+    return (url.protocol === "https:" && secureCloudHost) || localDevelopment;
   } catch {
     return false;
   }
@@ -628,7 +632,7 @@ if (bridgeRequested && !bridgeMode) {
   runtime.init();
   renderBridgeWaiting();
   notifyBridgeReady();
-  // The authenticated Gateway origin and quiz payload arrive in a later message.
+  // The authenticated cloud portal origin and quiz payload arrive in a later message.
 } else if (!payload) {
   renderInvalid();
 } else {

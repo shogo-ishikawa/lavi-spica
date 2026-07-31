@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 APP_NAME="LAVi-SPICA"
-VERSION="$(cat VERSION 2>/dev/null || printf '1.4.0')"
+VERSION="$(cat VERSION 2>/dev/null || printf '1.5.0')"
 COMMIT_MESSAGE="Update ${APP_NAME} to v${VERSION}"
 
 printf '\n%s\n' "${APP_NAME} v${VERSION} — GitHub HTTPS push"
@@ -30,9 +30,9 @@ for protected_file in \
   teacher/teacher.js \
   teacher/question-bank.js \
   teacher/answer-key.js \
-  gas/backend/QuestionBank.gs \
-  gas/backend/TeacherApi.gs \
-  gas/gateway/Teacher.html \
+  firebase/firestore.rules \
+  firebase/private/question-bank-v1.5.0.json \
+  firebase/hosting/teacher.html \
   open-teacher.command \
   .spica-cloud-url
 do
@@ -100,7 +100,7 @@ fi
 
 git add -A
 
-if [ -n "$(git ls-files 'teacher/*' 'gas/*' 'open-teacher.command' '.spica-cloud-url')" ]; then
+if [ -n "$(git ls-files 'teacher/*' 'firebase/*' 'open-teacher.command' '.spica-cloud-url')" ]; then
   printf '%s\n' "Error: instructor-only or private cloud files are staged or tracked. Push was stopped." >&2
   exit 1
 fi
@@ -115,7 +115,7 @@ git branch -M main
 
 if [ "${SPICA_PREPARE_ONLY:-0}" = "1" ]; then
   printf '\n%s\n' "Prepared the local Git commit. Push was skipped because SPICA_PREPARE_ONLY=1."
-  printf '%s\n' "The teacher/, gas/, launcher, and local cloud URL remain only on this computer."
+  printf '%s\n' "The teacher/, firebase/, launcher, and local cloud URL remain only on this computer."
   exit 0
 fi
 
@@ -123,5 +123,5 @@ printf '\n%s\n' "Pushing to GitHub over HTTPS..."
 git push -u origin main
 
 printf '\n%s\n' "Push completed."
-printf '%s\n' "The student app is in the repository; teacher/, gas/, answer keys, and cloud configuration remain local."
+printf '%s\n' "The student app is in the repository; teacher/, firebase/, answer keys, Firestore rules, and cloud configuration remain local."
 printf '%s\n' "For GitHub Pages, set Settings → Pages → Source to GitHub Actions."

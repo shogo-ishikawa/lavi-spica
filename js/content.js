@@ -3,7 +3,7 @@ export const COURSE_CONTENT = {
     "title": "LAVi-SPICA",
     "subtitle": "Structured Python Interactive Course and Activities",
     "tagline": "変数から可視化まで、書いて試せるPython基礎学習",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "audience": "プログラミングを初めて学ぶ大学生",
     "pyodide": "314.0.3"
   },
