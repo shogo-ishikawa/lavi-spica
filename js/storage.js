@@ -7,12 +7,13 @@ function initialState() {
     schemaVersion: SCHEMA_VERSION,
     completedLessons: [],
     lessonDrafts: {},
+    practiceDrafts: {},
     lessonPredictions: {},
     lessonNotes: {},
     postStudyAnswers: {},
     exitTickets: {},
     practiceAttempts: {},
-    settings: { theme: "dark", fontScale: 1, reduceMotion: false },
+    settings: { theme: "dark", fontScale: 1, reduceMotion: false, lessonView: "full" },
     updatedAt: new Date().toISOString(),
   };
 }
@@ -28,6 +29,7 @@ function mergeState(value) {
     ...base,
     completedLessons: Array.isArray(value.completedLessons) ? [...new Set(value.completedLessons)] : [],
     lessonDrafts: objectOrEmpty(value.lessonDrafts),
+    practiceDrafts: objectOrEmpty(value.practiceDrafts),
     lessonPredictions: objectOrEmpty(value.lessonPredictions),
     lessonNotes: objectOrEmpty(value.lessonNotes),
     postStudyAnswers: objectOrEmpty(value.postStudyAnswers),
@@ -91,6 +93,10 @@ export class CourseStore extends EventTarget {
 
   setDraft(lessonId, code) {
     this.update((state) => { state.lessonDrafts[lessonId] = String(code); });
+  }
+
+  setPracticeDraft(practiceId, code) {
+    this.update((state) => { state.practiceDrafts[String(practiceId)] = String(code); });
   }
 
   setPrediction(lessonId, text) {

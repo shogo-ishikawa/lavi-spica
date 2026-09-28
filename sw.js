@@ -1,10 +1,11 @@
-const CACHE_NAME = "lavi-spica-v1.5.0-r2";
+const CACHE_NAME = "lavi-spica-v1.5.0-r3";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./css/styles.css",
   "./css/portal.css",
   "./js/app.js",
+  "./js/lecture-plan.js",
   "./js/content.js",
   "./js/self-study.js",
   "./js/lesson-extensions.js",

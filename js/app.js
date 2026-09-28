@@ -1,6 +1,7 @@
 import { COURSE_CONTENT } from "./content.js";
 import { SELF_STUDY } from "./self-study.js";
 import { LESSON_EXPLANATIONS, POST_STUDY } from "./lesson-extensions.js";
+import { LECTURE_PLAN } from "./lecture-plan.js";
 import { CourseStore } from "./storage.js";
 import { PythonRuntime } from "./runtime.js";
 import {
@@ -57,6 +58,7 @@ let currentPracticeId = PRACTICES[0]?.id ?? null;
 let runtimeInitialized = false;
 
 const saveDraftDebounced = debounce((lessonId, code) => store.setDraft(lessonId, code), 350);
+const savePracticeDraftDebounced = debounce((practiceId, code) => store.setPracticeDraft(practiceId, code), 350);
 const savePredictionDebounced = debounce((lessonId, text) => store.setPrediction(lessonId, text), 350);
 const saveNoteDebounced = debounce((lessonId, text) => store.setLessonNote(lessonId, text), 350);
 const savePostStudyAnswerDebounced = debounce((taskId, text) => store.setPostStudyAnswer(taskId, text), 350);
@@ -95,6 +97,24 @@ function sessionLabel(sessionId) {
 function trackBadge(lesson) {
   if (lesson.track === "advanced") return '<span class="badge advanced">発展</span>';
   return '<span class="badge core">Python基礎</span>';
+}
+
+function practiceStatus(practiceId, snapshot = store.snapshot()) {
+  const attempt = snapshot.practiceAttempts[practiceId];
+  if (attempt?.passed) return { label: "合格済み", className: "done" };
+  if (attempt?.attempts) return { label: "実行済み", className: "advanced" };
+  return { label: "未着手", className: "warning" };
+}
+
+function lectureProgress(plan, snapshot = store.snapshot()) {
+  const validIds = plan.requiredPracticeIds.filter((id) => PRACTICE_BY_ID.has(id));
+  const passed = validIds.filter((id) => snapshot.practiceAttempts[id]?.passed).length;
+  const attempted = validIds.filter((id) => snapshot.practiceAttempts[id]?.attempts).length;
+  return {
+    passed, total: validIds.length,
+    label: passed === validIds.length && validIds.length ? "完了" : attempted ? "一部完了" : "未着手",
+    className: passed === validIds.length && validIds.length ? "done" : attempted ? "advanced" : "warning",
+  };
 }
 
 function toast(title, message = "", type = "info", timeout = 4200) {
@@ -254,6 +274,14 @@ function renderDashboard() {
       </aside>
     </section>
 
+    <section class="section mode-chooser" aria-labelledby="modeChooserTitle">
+      <div class="section-heading"><div><h2 id="modeChooserTitle">学び方を選ぶ</h2><p>これまでの自習コースはそのまま利用できます。授業後の復習には講義補助モードが便利です。</p></div></div>
+      <div class="mode-grid">
+        <article class="card mode-card"><div class="card-body"><div class="eyebrow">FULL COURSE</div><h3>通常学習モード</h3><p>詳しい解説、例題、予想、練習を順番に進めます。</p><a class="button secondary" href="#learn">通常モードを開く</a></div></article>
+        <article class="card mode-card featured"><div class="card-body"><div class="eyebrow">LECTURE COMPANION</div><h3>講義補助モード</h3><p>今日のnotebook、短い振り返り、必修練習へすぐ進みます。</p><a class="button primary" href="#lecture">講義補助モードを開く</a></div></article>
+      </div>
+    </section>
+
     <section class="section">
       <div class="section-heading">
         <div><h2>7回でつなぐ学習経路</h2><p>各回は「詳しい解説 → 例題の入力 → 練習問題 → 事後学習」の順で進みます。</p></div>
@@ -278,6 +306,62 @@ function renderDashboard() {
       </div>
     </section>
   `;
+}
+
+function renderLecturePractice(practiceId, snapshot) {
+  const practice = PRACTICE_BY_ID.get(practiceId);
+  if (!practice) return `<div class="info-strip danger"><span>!</span><div><strong>${escapeHTML(practiceId)}</strong> が見つかりません。lecture-plan.js のIDを確認してください。</div></div>`;
+  const status = practiceStatus(practiceId, snapshot);
+  return `<article class="lecture-practice-row">
+    <div><span class="badge ${status.className}">${status.label}</span><h3>${escapeHTML(practice.title)}</h3><p>${escapeHTML(practice.prompt)}</p></div>
+    <a class="button primary small" href="#practice?item=${encodeURIComponent(practice.id)}">この問題を始める</a>
+  </article>`;
+}
+
+function renderLectureIndex() {
+  const snapshot = store.snapshot();
+  appView.innerHTML = `
+    ${pageHeader({ eyebrow: "LECTURE COMPANION", title: "講義補助モード", description: "Colabで学んだ直後に、その回の要点を振り返り、必修問題だけを練習します。詳しい自習用解説は通常モードに残っています。", actions: '<a class="button secondary" href="#learn">通常モードへ</a>' })}
+    <div class="info-strip"><span aria-hidden="true">↗</span><div><strong>授業 → 振り返り → 練習</strong><br>各回のカードからnotebookを別タブで開くか、振り返りと必修練習をまとめた画面へ進んでください。</div></div>
+    <section class="section"><div class="card-grid lecture-session-grid">
+      ${LECTURE_PLAN.map((plan) => {
+        const progress = lectureProgress(plan, snapshot);
+        return `<article class="card lecture-session-card"><div class="card-body">
+          <div class="session-card-header"><span class="session-number">${plan.sessionId}</span><span class="badge ${progress.className}">${progress.label}</span></div>
+          <h2>${escapeHTML(plan.title)}</h2><p>${progress.passed} / ${progress.total} 問合格</p>
+          <div class="progress-track"><span style="width:${Math.round(progress.passed / Math.max(1, progress.total) * 100)}%"></span></div>
+          <div class="button-row"><a class="button primary small" href="#lecture/${plan.sessionId}">振り返り・練習</a><a class="button ghost small" href="${escapeAttribute(plan.notebookUrl)}" target="_blank" rel="noopener noreferrer">notebookを開く ↗</a></div>
+        </div></article>`;
+      }).join("")}
+    </div></section>`;
+}
+
+function renderLectureSession(plan) {
+  const snapshot = store.snapshot();
+  const progress = lectureProgress(plan, snapshot);
+  const lessons = plan.requiredLessonIds.map((id) => LESSON_BY_ID.get(id)).filter(Boolean);
+  appView.innerHTML = `
+    ${pageHeader({ eyebrow: `LECTURE COMPANION · SESSION ${plan.sessionId}`, title: `第${plan.sessionId}回 ${plan.title}`, description: plan.optionalNotes || "notebookの説明を思い出し、必修練習へ進みましょう。", breadcrumb: '<a href="#lecture">講義補助モード</a><span>›</span><span>今回の振り返り</span>', actions: `<a class="button primary" href="${escapeAttribute(plan.notebookUrl)}" target="_blank" rel="noopener noreferrer">notebookを開く ↗</a>` })}
+    <div class="lecture-status"><span class="badge ${progress.className}">${progress.label}</span><strong>${progress.passed} / ${progress.total} 問合格</strong><div class="progress-track"><span style="width:${Math.round(progress.passed / Math.max(1, progress.total) * 100)}%"></span></div></div>
+    <div class="lecture-columns">
+      <main>
+        <section class="section card"><div class="card-body"><div class="eyebrow">TODAY'S POINTS</div><h2>今日の要点</h2><ul class="objective-list">${plan.summaryBullets.map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul></div></section>
+        <section class="section"><div class="section-heading"><div><h2>振り返りカード</h2><p>まず自分の言葉で答えてから、考え方・答えを開きます。</p></div></div><div class="reflection-grid">
+          ${plan.reflectionCards.map((card, index) => `<article class="card reflection-card"><div class="card-body"><span class="question-number">${index + 1}</span><h3>${escapeHTML(card.question)}</h3>${card.hint ? `<details><summary>ヒント</summary><p>${escapeHTML(card.hint)}</p></details>` : ""}<details><summary>考え方・答えを確認</summary><p>${escapeHTML(card.answer)}</p></details></div></article>`).join("")}
+        </div></section>
+        <section class="section"><div class="section-heading"><div><h2>今日の必修練習</h2><p>必要な問題だけを表示しています。ボタンから保存済みの続きへ移動できます。</p></div></div><div class="lecture-practice-list">${plan.requiredPracticeIds.map((id) => renderLecturePractice(id, snapshot)).join("")}</div></section>
+        ${plan.optionalExampleLinks.length ? `<section class="section optional-examples"><div class="eyebrow">OPTIONAL</div><h2>実例として見てみよう</h2><p>本編の必修課題ではありません。Pythonが音楽やアートで実際に動く例です。</p><div class="card-grid">${plan.optionalExampleLinks.map((link) => `<a class="card card-link example-link" href="${escapeAttribute(link.url)}" target="_blank" rel="noopener noreferrer"><div class="card-body"><h3>${escapeHTML(link.label)} ↗</h3><p>${escapeHTML(link.description)}</p></div></a>`).join("")}</div></section>` : ""}
+      </main>
+      <aside class="lecture-side card"><div class="card-body"><div class="eyebrow">REVIEW</div><h2>詳しく見直す</h2><p>長い概念解説はここでは省略しています。必要なlessonだけ通常モードで開けます。</p><div class="lesson-list">${lessons.map((lesson) => `<a href="#learn/${escapeAttribute(lesson.id)}" class="compact-lesson-link">${escapeHTML(lesson.title)} →</a>`).join("")}</div></div></aside>
+    </div>`;
+}
+
+function renderLecture(route) {
+  const sessionId = Number(route.segments[1]);
+  if (!sessionId) return renderLectureIndex();
+  const plan = LECTURE_PLAN.find((item) => Number(item.sessionId) === sessionId);
+  if (!plan) return renderNotFound();
+  renderLectureSession(plan);
 }
 
 function lessonRow(lesson, snapshot) {
@@ -369,6 +453,7 @@ function renderLessonDetail(lesson) {
   const prediction = snapshot.lessonPredictions[lesson.id] ?? "";
   const note = snapshot.lessonNotes[lesson.id] ?? "";
   const exit = snapshot.exitTickets[String(lesson.session)]?.text ?? "";
+  const lessonView = snapshot.settings.lessonView === "compact" ? "compact" : "full";
 
   appView.innerHTML = `
     ${pageHeader({
@@ -376,10 +461,10 @@ function renderLessonDetail(lesson) {
       title: lesson.title,
       description: lesson.subtitle,
       breadcrumb: `<a href="#learn">学習コース</a><span>›</span><a href="#learn?session=${lesson.session}">${escapeHTML(session.title)}</a><span>›</span><span>${escapeHTML(lesson.title)}</span>`,
-      actions: `<button class="button ${done ? "success" : "primary"}" type="button" data-action="toggle-lesson" data-lesson="${escapeAttribute(lesson.id)}">${done ? "✓ 完了済み" : "lessonを完了にする"}</button>`,
+      actions: `<div class="button-row"><button class="button secondary" type="button" data-action="toggle-lesson-view">${lessonView === "compact" ? "詳しい解説を表示" : "Compact View"}</button><button class="button ${done ? "success" : "primary"}" type="button" data-action="toggle-lesson" data-lesson="${escapeAttribute(lesson.id)}">${done ? "✓ 完了済み" : "lessonを完了にする"}</button></div>`,
     })}
 
-    <div class="lesson-layout">
+    <div class="lesson-layout" data-lesson-view="${lessonView}">
       <article class="lesson-content">
         <div class="tag-list">${trackBadge(lesson)}<span class="tag">${lesson.minutes}分目安</span>${lesson.keywords.map((keyword) => `<span class="tag">${escapeHTML(keyword)}</span>`).join("")}</div>
 
@@ -394,7 +479,7 @@ function renderLessonDetail(lesson) {
         </section>
 
         ${study ? `
-        <section class="section">
+        <section class="section long-explanation">
           <div class="section-heading"><div><h2>1. 自習用ガイド</h2><p>授業を欠席したときや復習するときも、この順番で読み進められます。</p></div></div>
           <article class="study-intro">
             ${study.lead.map((paragraph) => `<p>${escapeHTML(paragraph)}</p>`).join("")}
@@ -449,7 +534,7 @@ function renderLessonDetail(lesson) {
           </div>
         </section>` : ""}
 
-        <section class="section">
+        <section class="section long-explanation">
           <div class="section-heading"><div><h2>2. 文法のしくみ</h2><p>要点を開き、説明とコードを対応させて確認します。</p></div></div>
           ${lesson.concepts.map((concept, conceptIndex) => `
             <details class="card concept-card" ${conceptIndex === 0 ? "open" : ""}>
@@ -607,6 +692,7 @@ function renderPractice(route) {
   const practice = currentPracticeId ? PRACTICE_BY_ID.get(currentPracticeId) : null;
   const snapshot = store.snapshot();
   const editorId = "practice-editor";
+  const practiceDraft = practice ? snapshot.practiceDrafts?.[practice.id] : null;
 
   appView.innerHTML = `
     ${pageHeader({
@@ -637,7 +723,8 @@ function renderPractice(route) {
             <div class="button-row" style="margin-top:12px"><button class="button ghost small" type="button" data-action="show-hints" data-practice="${escapeAttribute(practice.id)}">ヒント</button><button class="button ghost small" type="button" data-action="show-solution" data-practice="${escapeAttribute(practice.id)}">解答例</button><a class="button ghost small" href="#learn/${escapeAttribute(practice.lesson.id)}">対応lesson</a></div>
             <div data-practice-feedback="${escapeAttribute(practice.id)}"></div>
           </div></div>
-          <div style="margin-top:14px">${registerEditor(editorId, practice.starterCode, `${practice.id} · ${practice.title}`, { kind: "practice", practiceId: practice.id, lessonId: practice.lesson.id, filename: `${practice.id}.py` })}</div>
+          <div class="draft-notice">${practiceDraft == null ? "入力内容はこの問題ごとに自動保存されます。" : "この問題の保存済み下書きを復元しました。"}</div>
+          <div style="margin-top:10px">${registerEditor(editorId, practiceDraft ?? practice.starterCode, `${practice.id} · ${practice.title}`, { kind: "practice", practiceId: practice.id, lessonId: practice.lesson.id, defaultCode: practice.starterCode, filename: `${practice.id}.py` })}</div>
         </section>
       </div>
     ` : `<div class="empty-state"><h2>条件に一致する練習問題がありません</h2><button class="button primary" type="button" data-action="reset-practice-filter">絞り込みを解除</button></div>`}
@@ -756,6 +843,7 @@ function renderRoute() {
 
   switch (currentRoute.name) {
     case "dashboard": renderDashboard(); break;
+    case "lecture": renderLecture(currentRoute); break;
     case "learn": renderLearn(currentRoute); break;
     case "practice": renderPractice(currentRoute); break;
     case "library": renderLibrary(); break;
@@ -945,15 +1033,20 @@ function updatePracticeFeedback(practiceId, evaluation) {
   });
 }
 
-function loadCodeIntoEditor(editorId, code, contextPatch = {}, message = "コードを読み込みました") {
+async function loadCodeIntoEditor(editorId, code, contextPatch = {}, message = "コードを読み込みました") {
   const textarea = editorElement(editorId);
   const context = editorContexts.get(editorId);
   if (!textarea || !context) return;
-  if (textarea.value.trim() && textarea.value !== context.defaultCode) {
-    // The student can always undo in the textarea; keep the interaction immediate for a classroom setting.
+  if (textarea.value !== context.defaultCode && textarea.value !== code) {
+    const confirmed = await showConfirm({ title: "編集中のコードを置き換えますか", body: "<p>現在のコードには変更があります。下書きへ保存してから、別のコードでエディタを置き換えます。</p>", confirmLabel: "置き換える" });
+    if (!confirmed) return;
   }
+  if (context.practiceId) store.setPracticeDraft(context.practiceId, textarea.value);
+  else if (context.kind === "lesson" && context.lessonId) store.setDraft(context.lessonId, textarea.value);
   textarea.value = code;
   editorContexts.set(editorId, { ...context, ...contextPatch, defaultCode: code });
+  if (contextPatch.practiceId) store.setPracticeDraft(contextPatch.practiceId, code);
+  else if (contextPatch.kind === "lesson" && contextPatch.lessonId) store.setDraft(contextPatch.lessonId, code);
   textarea.focus();
   textarea.setSelectionRange(0, 0);
   selectOutputTab(editorId, "console");
@@ -1017,6 +1110,7 @@ async function handleClick(event) {
     if (context && textarea) {
       textarea.value = context.defaultCode;
       if (context.kind === "lesson" && context.lessonId) store.setDraft(context.lessonId, textarea.value);
+      if (context.practiceId) store.setPracticeDraft(context.practiceId, textarea.value);
       toast("開始コードへ戻しました", "", "info", 2200);
     }
     return;
@@ -1028,18 +1122,21 @@ async function handleClick(event) {
   if (action === "load-study-code") {
     const lesson = LESSON_BY_ID.get(target.dataset.lesson);
     const code = SELF_STUDY[lesson?.id]?.walkthrough?.code;
-    if (lesson && code) loadCodeIntoEditor(editorId, code, { kind: "lesson", lessonId: lesson.id, practiceId: null, filename: `${lesson.id}-study.py` }, "一行ずつ読む例題を読み込みました");
+    if (lesson && code) await loadCodeIntoEditor(editorId, code, { kind: "lesson", lessonId: lesson.id, practiceId: null, filename: `${lesson.id}-study.py` }, "一行ずつ読む例題を読み込みました");
     return;
   }
   if (action === "load-live-code") {
     const lesson = LESSON_BY_ID.get(target.dataset.lesson);
     const step = lesson?.liveCoding?.[Number(target.dataset.index)];
-    if (step) loadCodeIntoEditor(editorId, step.code, { kind: "lesson", lessonId: lesson.id, practiceId: null, filename: `${lesson.id}-live.py` }, `${step.title}を読み込みました`);
+    if (step) await loadCodeIntoEditor(editorId, step.code, { kind: "lesson", lessonId: lesson.id, practiceId: null, filename: `${lesson.id}-live.py` }, `${step.title}を読み込みました`);
     return;
   }
   if (action === "load-practice") {
     const practice = PRACTICE_BY_ID.get(target.dataset.practice);
-    if (practice) loadCodeIntoEditor(editorId, practice.starterCode, { kind: "practice", practiceId: practice.id, lessonId: practice.lesson.id, filename: `${practice.id}.py` }, `${practice.title}を読み込みました`);
+    if (practice) {
+      const savedCode = store.snapshot().practiceDrafts?.[practice.id];
+      await loadCodeIntoEditor(editorId, savedCode ?? practice.starterCode, { kind: "practice", practiceId: practice.id, lessonId: practice.lesson.id, defaultCode: practice.starterCode, filename: `${practice.id}.py` }, savedCode == null ? `${practice.title}を読み込みました` : `${practice.title}の下書きを復元しました`);
+    }
     return;
   }
   if (action === "show-hints") {
@@ -1066,7 +1163,16 @@ async function handleClick(event) {
     toast(!completed ? "lessonを完了にしました" : "完了記録を解除しました", "", !completed ? "success" : "info");
     return;
   }
+  if (action === "toggle-lesson-view") {
+    const current = store.snapshot().settings.lessonView;
+    store.setSetting("lessonView", current === "compact" ? "full" : "compact");
+    renderRoute();
+    return;
+  }
   if (action === "select-practice") {
+    const activeEditor = editorElement("practice-editor");
+    const activeContext = editorContexts.get("practice-editor");
+    if (activeEditor && activeContext?.practiceId) store.setPracticeDraft(activeContext.practiceId, activeEditor.value);
     currentPracticeId = target.dataset.practice;
     const params = new URLSearchParams({ item: currentPracticeId });
     setHashRoute("practice", params);
@@ -1108,6 +1214,7 @@ function handleInput(event) {
     const editorId = target.dataset.editor;
     const context = editorContexts.get(editorId);
     if (context?.kind === "lesson" && context.lessonId && !context.practiceId) saveDraftDebounced(context.lessonId, target.value);
+    if (context?.practiceId) savePracticeDraftDebounced(context.practiceId, target.value);
     return;
   }
   if (target.dataset.save === "prediction") {
