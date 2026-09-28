@@ -7,6 +7,11 @@ const failures = [];
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 const read = (path) => readFileSync(join(root, path), "utf8");
 
+if (!existsSync(join(root, "firebase"))) {
+  console.log("Public checkout detected: instructor-only Firebase validation was skipped.");
+  process.exit(0);
+}
+
 const required = [
   "firebase/firebase.json",
   "firebase/firestore.rules",

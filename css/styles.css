@@ -513,6 +513,13 @@ main { min-width: 0; }
 .lecture-practice-row p { margin: 0; color: var(--text-muted); font-size: .84rem; }
 .optional-examples { padding: 20px; border: 1px dashed color-mix(in srgb, var(--accent) 55%, var(--border)); border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 4%, var(--surface)); }
 .optional-examples > p { color: var(--text-muted); }
+.example-activity { margin-top: 18px; padding: 16px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.activity-flow { display: grid; gap: 14px; padding-left: 24px; }
+.activity-flow li { padding-left: 4px; }
+.activity-flow p { margin: 6px 0 10px; }
+.activity-flow details { margin-top: 8px; }
+.self-check { display: block; margin-top: 12px; }
+.activity-status { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; color: var(--text-muted); font-size: .85rem; }
 .example-link { margin-top: 12px; }
 .draft-notice { margin-top: 14px; color: var(--success); font-size: .78rem; }
 .lesson-layout[data-lesson-view="compact"] .long-explanation { display: none; }

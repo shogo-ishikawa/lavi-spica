@@ -13,6 +13,7 @@ function initialState() {
     postStudyAnswers: {},
     exitTickets: {},
     practiceAttempts: {},
+    exampleActivities: {},
     settings: { theme: "dark", fontScale: 1, reduceMotion: false, lessonView: "full" },
     updatedAt: new Date().toISOString(),
   };
@@ -35,6 +36,7 @@ function mergeState(value) {
     postStudyAnswers: objectOrEmpty(value.postStudyAnswers),
     exitTickets: objectOrEmpty(value.exitTickets),
     practiceAttempts: objectOrEmpty(value.practiceAttempts),
+    exampleActivities: objectOrEmpty(value.exampleActivities),
     settings: { ...base.settings, ...objectOrEmpty(value.settings) },
     updatedAt: value.updatedAt || base.updatedAt,
     schemaVersion: SCHEMA_VERSION,
@@ -137,6 +139,13 @@ export class CourseStore extends EventTarget {
         exerciseVersion: record.exerciseVersion || null,
         history: [...(previous.history || []), record].slice(-20),
       };
+    });
+  }
+
+  setExampleActivity(activityId, patch) {
+    this.update((state) => {
+      const previous = state.exampleActivities[String(activityId)] || {};
+      state.exampleActivities[String(activityId)] = { ...previous, ...patch, updatedAt: new Date().toISOString() };
     });
   }
 

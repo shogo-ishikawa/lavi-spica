@@ -27,7 +27,7 @@ const publicFiles = [
 for (const path of publicFiles) assert(existsSync(join(root, path)), `必須ファイルがありません: ${path}`);
 
 const version = read("VERSION").trim();
-assert(version === "1.6.0", `想定versionは1.6.0です: ${version}`);
+assert(version === "1.7.0", `想定versionは1.7.0です: ${version}`);
 assert(COURSE_CONTENT.meta.version === version, "COURSE_CONTENTとVERSIONが一致しません");
 assert(JSON.parse(read("package.json")).version === version, "package.jsonとVERSIONが一致しません");
 assert(JSON.parse(read("package-lock.json")).version === version, "package-lock.jsonとVERSIONが一致しません");
@@ -90,7 +90,12 @@ for (const phrase of ["LESSON_EXPLANATIONS", "POST_STUDY", "事後学習：問�
 }
 const storageJs = read("js/storage.js");
 assert(storageJs.includes("postStudyAnswers"), "事後学習回答の保存領域がありません");
+assert(storageJs.includes("exampleActivities") && storageJs.includes("setExampleActivity"), "例題活動の保存領域がありません");
 assert(storageJs.includes("lavi-spica:v3:student-state"), "学生進捗schema v3がありません");
+const exampleActivitiesJs = read("js/example-activities.js");
+for (const id of ["01-variables-walkthrough", "01-variables-live-0", "01-variables-live-1"]) assert(exampleActivitiesJs.includes(id), `変数例題の活動定義がありません: ${id}`);
+for (const phrase of ["question", "expected", "explanation", "hints", "changeTask", "changeCheck"]) assert(exampleActivitiesJs.includes(phrase), `例題活動の要素がありません: ${phrase}`);
+assert(appJs.includes("data-example-prediction") && appJs.includes("start-example-change") && appJs.includes("activityId"), "例題の予想・変更・実行連携がありません");
 
 const coreJs = read("quiz/quiz-core.js");
 assert(coreJs.includes("lavi-spica-quiz-link-v2"), "小テストlink v2がありません");
@@ -117,6 +122,7 @@ assert(/(^|\n)teacher\/(\n|$)/.test(gitignore), "teacher/が.gitignoreにあり�
 assert(/(^|\n)open-teacher\.command(\n|$)/.test(gitignore), "open-teacher.commandが.gitignoreにありません");
 assert(/(^|\n)firebase\/(\n|$)/.test(gitignore), "firebase/が.gitignoreにありません");
 assert(/(^|\n)\.spica-cloud-url(\n|$)/.test(gitignore), ".spica-cloud-urlが.gitignoreにありません");
+for (const path of ["LAVi-SPICA-v1.5.0-FIREBASE-SETUP-GUIDE.md", "LAVi-SPICA-v1.5.0-OPERATIONS-GUIDE.md", "LAVi-SPICA-v1.5.0-validation.txt", "docs/EXERCISE-INVENTORY.md"]) assert(!existsSync(join(root, path)), `教員向け運用文書が公開ツリーに残っています: ${path}`);
 if (existsSync(join(root, "teacher"))) {
   for (const path of ["teacher/index.html", "teacher/teacher.js", "teacher/question-bank.js", "teacher/answer-key.js", "teacher/GUIDE.md", "open-teacher.command"]) {
     assert(existsSync(join(root, path)), `教員用ローカルファイルがありません: ${path}`);
