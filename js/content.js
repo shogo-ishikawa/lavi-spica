@@ -3,7 +3,7 @@ export const COURSE_CONTENT = {
     "title": "LAVi-SPICA",
     "subtitle": "Structured Python Interactive Course and Activities",
     "tagline": "変数から可視化まで、書いて試せるPython基礎学習",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "audience": "プログラミングを初めて学ぶ大学生",
     "pyodide": "314.0.3"
   },
@@ -170,10 +170,10 @@ export const COURSE_CONTENT = {
           "predict": "出力される数値と型を予想してください。"
         },
         {
-          "title": "値を更新する",
-          "instruction": "同じ変数名へ新しい計算結果を代入します。",
-          "code": "score = 70\nscore = score + 5\nprint(score)\n",
-          "predict": "2行目の右辺と左辺は、どの順番で処理されるでしょうか。"
+          "title": "代入後に元の変数を更新する",
+          "instruction": "bへaの値を代入した後でaを更新し、bがどうなるか確かめます。",
+          "code": "a = 3\nb = a\na = 8\nprint(b)\n",
+          "predict": "最後に表示されるbの値を予想してください。"
         }
       ],
       "starterCode": "# 距離と時間から平均速度を計算します\ndistance_km = 18.0\ntime_hour = 0.75\n\n# ここに speed_kmh の計算を書きます\n\nprint(speed_kmh)\n",

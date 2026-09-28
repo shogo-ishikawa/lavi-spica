@@ -3,6 +3,7 @@ import { SELF_STUDY } from "./self-study.js";
 import { LESSON_EXPLANATIONS, POST_STUDY } from "./lesson-extensions.js";
 import { LECTURE_PLAN } from "./lecture-plan.js";
 import { ENROLLED_NOTICE, MATERIALS } from "./materials.js";
+import { exampleActivity } from "./example-activities.js";
 import { CourseStore } from "./storage.js";
 import { PythonRuntime } from "./runtime.js";
 import {
@@ -23,6 +24,7 @@ import {
 } from "./utils.js";
 
 const APP_VERSION = COURSE_CONTENT.meta.version;
+const BUILD_ID = "20260928.1";
 const LESSONS = [...COURSE_CONTENT.lessons].sort((a, b) => (a.session - b.session) || (a.order - b.order));
 const LESSON_BY_ID = new Map(LESSONS.map((lesson) => [lesson.id, lesson]));
 const SESSION_BY_ID = new Map(COURSE_CONTENT.sessions.map((session) => [Number(session.id), session]));
@@ -64,6 +66,7 @@ const savePredictionDebounced = debounce((lessonId, text) => store.setPrediction
 const saveNoteDebounced = debounce((lessonId, text) => store.setLessonNote(lessonId, text), 350);
 const savePostStudyAnswerDebounced = debounce((taskId, text) => store.setPostStudyAnswer(taskId, text), 350);
 const saveExitDebounced = debounce((sessionId, text) => store.setExitTicket(sessionId, text), 350);
+const saveExampleDebounced = debounce((activityId, patch) => store.setExampleActivity(activityId, patch), 350);
 
 function lessonNumber(lesson) {
   const prefix = Number.parseInt(String(lesson?.id || "").split("-")[0], 10);
@@ -330,7 +333,7 @@ function renderMaterialRef(ref) {
   const material = MATERIALS[ref.materialId];
   if (!material) return `<div class="info-strip danger"><span>!</span><div>資料ID ${escapeHTML(ref.materialId)} が見つかりません。</div></div>`;
   const badge = material.access === "enrolled" ? "履修者限定" : "一般公開・PDF";
-  return `<article class="card"><div class="card-body"><div class="tag-list"><span class="badge ${material.access === "enrolled" ? "warning" : "done"}">${badge}</span><span class="tag">${escapeHTML(material.type.toUpperCase())}</span></div><h3>${escapeHTML(material.title)}</h3><p>${escapeHTML(ref.coverage)}</p><p class="help-text">${escapeHTML(material.description)}</p>${material.access === "enrolled" ? `<div class="info-strip warning"><span>!</span><div>${escapeHTML(ENROLLED_NOTICE)}</div></div>` : ""}<a class="button secondary small" href="${escapeAttribute(material.url)}" target="_blank" rel="noopener noreferrer">資料を新しいタブで開く ↗</a></div></article>`;
+  return `<article class="card"><div class="card-body"><div class="tag-list"><span class="badge ${material.access === "enrolled" ? "warning" : "done"}">${badge}</span><span class="tag">${escapeHTML(material.type.toUpperCase())}</span></div><h3>${escapeHTML(material.title)}</h3><p>${escapeHTML(ref.coverage)}</p><p class="help-text">${escapeHTML(material.description)}</p>${material.access === "enrolled" ? `<div class="info-strip warning"><span>!</span><div>${escapeHTML(ENROLLED_NOTICE)}</div></div>` : ""}<a class="button secondary small" href="${escapeAttribute(material.url)}" target="_blank" rel="noopener noreferrer">講義資料を開く：${escapeHTML(material.title)} ↗</a></div></article>`;
 }
 
 function renderApplication(example, topicId) {
@@ -454,6 +457,24 @@ function registerEditor(editorId, code, title, context = {}) {
   `;
 }
 
+function renderExampleActivity(activity, saved = {}) {
+  const predictionChecked = saved.predictionChecked;
+  const changeLabel = activity.changeCheck ? "指定された変更課題" : "自由に変更して試す活動";
+  return `<section class="example-activity" data-example-activity="${escapeAttribute(activity.id)}">
+    <div class="eyebrow">理解確認 · ${escapeHTML(activity.id)}</div>
+    <ol class="activity-flow"><li><strong>① 予想する</strong><p>${escapeHTML(activity.question)}</p><input class="input" data-example-prediction="${escapeAttribute(activity.id)}" value="${escapeAttribute(saved.prediction || "")}" placeholder="実行前の予想"></li>
+    <li><strong>② 実行する</strong><p>例題をエディタへ読み込み、実行してください。実行できたことと理解できたことは別々に記録されます。</p></li>
+    <li><strong>③ 答えを確認する</strong><div class="button-row"><button class="button ghost small" type="button" data-action="check-example-prediction" data-activity="${escapeAttribute(activity.id)}">予想を答え合わせ</button></div>
+      <div data-example-prediction-feedback>${predictionChecked ? `<div class="practice-feedback ${saved.predictionCorrect ? "pass" : "fail"}"><strong>${saved.predictionCorrect ? "予想が合っていました" : "予想を見直しましょう"}</strong></div>` : ""}</div>
+      <details><summary>段階的なヒント 1</summary><p>${escapeHTML(activity.hints[0])}</p><details><summary>ヒント 2</summary><p>${escapeHTML(activity.hints[1] || activity.hints[0])}</p></details></details>
+      <details><summary>期待される結果と解説</summary><p><strong>${escapeHTML(activity.expected)}</strong></p><p>${escapeHTML(activity.explanation)}</p></details>
+      <label class="self-check"><input type="checkbox" data-example-reason="${escapeAttribute(activity.id)}" ${saved.reasonConfirmed ? "checked" : ""}> 解説の処理順を自分のコードと照合した</label></li>
+    <li><strong>④ 少し変える（${changeLabel}）</strong><p>${escapeHTML(activity.changeTask)}</p><button class="button secondary small" type="button" data-action="start-example-change" data-activity="${escapeAttribute(activity.id)}">変更課題を始める</button></li>
+    <li><strong>⑤ 変更後も確かめる</strong><div data-example-change-feedback>${saved.changeChecked ? `<div class="practice-feedback ${saved.changePassed ? "pass" : "fail"}"><strong>${saved.changePassed ? "変更課題を確認済み" : "変更課題を再確認"}</strong><br>${escapeHTML(saved.changeMessage || "")}</div>` : '<p class="help-text">変更したコードを実行すると、ここへ確認結果を表示します。</p>'}</div></li></ol>
+    <div class="activity-status"><span>${saved.executed ? "✓ コード実行済み" : "○ コード未実行"}</span><span>${saved.reasonConfirmed ? "✓ 理由を自己確認済み" : "○ 理由は未確認"}</span></div>
+  </section>`;
+}
+
 function renderLessonDetail(lesson) {
   const snapshot = store.snapshot();
   const done = snapshot.completedLessons.includes(lesson.id);
@@ -470,6 +491,7 @@ function renderLessonDetail(lesson) {
   const note = snapshot.lessonNotes[lesson.id] ?? "";
   const exit = snapshot.exitTickets[String(lesson.session)]?.text ?? "";
   const lessonView = snapshot.settings.lessonView === "compact" ? "compact" : "full";
+  const walkthroughActivity = study ? exampleActivity(lesson, "walkthrough", 0, study.walkthrough) : null;
 
   appView.innerHTML = `
     ${pageHeader({
@@ -538,6 +560,7 @@ function renderLessonDetail(lesson) {
               <ol class="walkthrough-steps">${study.walkthrough.steps.map((step) => `<li>${escapeHTML(step)}</li>`).join("")}</ol>
               <div class="try-callout"><strong>少し変えて試す：</strong>${escapeHTML(study.walkthrough.try)}</div>
               <button class="button secondary small" type="button" data-action="load-study-code" data-lesson="${escapeAttribute(lesson.id)}" data-editor="${escapeAttribute(editorId)}">例題を右のエディタへ</button>
+              ${renderExampleActivity(walkthroughActivity, snapshot.exampleActivities[walkthroughActivity.id])}
             </div>
           </article>
           <div class="checkpoint-list">
@@ -562,15 +585,16 @@ function renderLessonDetail(lesson) {
 
         <section class="section">
           <div class="section-heading"><div><h2>3. 例題を入力して試す</h2><p>授業では一緒に入力します。自習ではコードを読み、出力を予想してからエディタへ読み込みます。</p></div></div>
-          ${lesson.liveCoding.map((step, stepIndex) => `
+          ${lesson.liveCoding.map((step, stepIndex) => { const activity = exampleActivity(lesson, "live", stepIndex, step); return `
             <article class="live-step">
               <h3>${stepIndex + 1}. ${escapeHTML(step.title)}</h3>
               <p>${escapeHTML(step.instruction)}</p>
               <div class="predict-callout"><strong>実行前の予想：</strong> ${escapeHTML(step.predict)}</div>
               ${codeBlock(step.code)}
               <button class="button secondary small" type="button" data-action="load-live-code" data-lesson="${escapeAttribute(lesson.id)}" data-index="${stepIndex}" data-editor="${escapeAttribute(editorId)}">この例題を右のエディタへ</button>
+              ${renderExampleActivity(activity, snapshot.exampleActivities[activity.id])}
             </article>
-          `).join("")}
+          `; }).join("")}
         </section>
 
         <section class="section">
@@ -981,6 +1005,18 @@ function codeFingerprint(code) {
   return (hash >>> 0).toString(16);
 }
 
+function findExampleActivity(activityId) {
+  for (const lesson of LESSONS) {
+    if (`${lesson.id}-walkthrough` === activityId && SELF_STUDY[lesson.id]?.walkthrough) return exampleActivity(lesson, "walkthrough", 0, SELF_STUDY[lesson.id].walkthrough);
+    const prefix = `${lesson.id}-live-`;
+    if (activityId.startsWith(prefix)) {
+      const index = Number(activityId.slice(prefix.length));
+      if (lesson.liveCoding[index]) return exampleActivity(lesson, "live", index, lesson.liveCoding[index]);
+    }
+  }
+  return null;
+}
+
 function executableSource(code) {
   return String(code).replace(/#[^\n]*/g, "").replace(/(?:'''[\s\S]*?'''|\"\"\"[\s\S]*?\"\"\"|'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\")/g, "");
 }
@@ -1045,6 +1081,19 @@ async function runEditor(editorId) {
         });
         updatePracticeFeedback(practice.id, evaluation);
       }
+    }
+    if (context.activityId) {
+      const activity = findExampleActivity(context.activityId);
+      const patch = { code, codeHash: codeFingerprint(code), executed: true, actualOutput: normalizeOutput(result.stdout), executionError: stripAnsi(result.error || "") };
+      if (context.activityMode === "change" && activity) {
+        const evaluation = activity.changeCheck
+          ? evaluatePractice({ check: activity.changeCheck }, code, result)
+          : { passed: true, message: "自由実験を実行しました。固定の模範出力とは比較せず、予想した変化と実際の結果を自分で比べてください。" };
+        Object.assign(patch, { changeChecked: true, changePassed: evaluation.passed, changeMessage: evaluation.message });
+        const feedback = document.querySelector(`[data-example-activity="${CSS.escape(activity.id)}"] [data-example-change-feedback]`);
+        if (feedback) feedback.innerHTML = `<div class="practice-feedback ${evaluation.passed ? "pass" : "fail"}"><strong>${evaluation.passed ? "変更後を確認しました" : "変更課題を再確認"}</strong><br>${escapeHTML(evaluation.message)}</div>`;
+      }
+      store.setExampleActivity(context.activityId, patch);
     }
     renderExecutionResult(editorId, result, evaluation);
     setRuntimeState(result.error ? "error" : "ready", result.error ? "コードにエラーがあります" : "Python実行完了", `${Number(result.elapsedMs || 0).toFixed(1)} ms`);
@@ -1164,13 +1213,39 @@ async function handleClick(event) {
   if (action === "load-study-code") {
     const lesson = LESSON_BY_ID.get(target.dataset.lesson);
     const code = SELF_STUDY[lesson?.id]?.walkthrough?.code;
-    if (lesson && code) await loadCodeIntoEditor(editorId, code, { kind: "lesson", lessonId: lesson.id, practiceId: null, filename: `${lesson.id}-study.py` }, "一行ずつ読む例題を読み込みました");
+    if (lesson && code) await loadCodeIntoEditor(editorId, code, { kind: "example", lessonId: lesson.id, practiceId: null, activityId: `${lesson.id}-walkthrough`, activityMode: "baseline", filename: `${lesson.id}-study.py` }, "一行ずつ読む例題を読み込みました");
     return;
   }
   if (action === "load-live-code") {
     const lesson = LESSON_BY_ID.get(target.dataset.lesson);
     const step = lesson?.liveCoding?.[Number(target.dataset.index)];
-    if (step) await loadCodeIntoEditor(editorId, step.code, { kind: "lesson", lessonId: lesson.id, practiceId: null, filename: `${lesson.id}-live.py` }, `${step.title}を読み込みました`);
+    if (step) await loadCodeIntoEditor(editorId, step.code, { kind: "example", lessonId: lesson.id, practiceId: null, activityId: `${lesson.id}-live-${Number(target.dataset.index)}`, activityMode: "baseline", filename: `${lesson.id}-live.py` }, `${step.title}を読み込みました`);
+    return;
+  }
+  if (action === "check-example-prediction") {
+    const activity = findExampleActivity(target.dataset.activity);
+    const root = target.closest("[data-example-activity]");
+    const prediction = root?.querySelector("[data-example-prediction]")?.value.trim() || "";
+    if (!prediction) { toast("先に予想を入力してください", "同じ欄へ一度だけ入力すれば保存されます。", "error"); return; }
+    const objective = activity && !activity.expected.startsWith("実行結果を");
+    const correct = objective ? canonicalAnswer(prediction) === canonicalAnswer(activity.expected) : null;
+    store.setExampleActivity(target.dataset.activity, { prediction, predictionChecked: true, predictionCorrect: correct });
+    const feedback = root?.querySelector("[data-example-prediction-feedback]");
+    if (feedback) feedback.innerHTML = objective
+      ? `<div class="practice-feedback ${correct ? "pass" : "fail"}"><strong>${correct ? "予想が合っていました" : "予想を見直しましょう"}</strong><br>期待される答え：${escapeHTML(activity.expected)}</div>`
+      : '<div class="practice-feedback"><strong>自己確認へ進みます</strong><br>実際の出力と解説を照合してください。この設問は自由記述のため自動採点しません。</div>';
+    return;
+  }
+  if (action === "start-example-change") {
+    const activity = findExampleActivity(target.dataset.activity);
+    const lessonId = target.dataset.activity.split(/-(?=walkthrough|live)/)[0];
+    const id = `lesson-editor-${lessonId}`;
+    const textarea = editorElement(id);
+    if (!activity || !textarea) return;
+    const context = editorContexts.get(id) || {};
+    editorContexts.set(id, { ...context, kind: "example", lessonId, practiceId: null, activityId: activity.id, activityMode: "change", defaultCode: activity.baselineCode });
+    textarea.focus();
+    toast("変更課題を開始しました", "コードを変更し、実行して確認してください。", "info");
     return;
   }
   if (action === "load-practice") {
@@ -1260,6 +1335,15 @@ function handleInput(event) {
     if (context?.practiceId) {
       document.querySelectorAll(`[data-practice-feedback="${CSS.escape(context.practiceId)}"]`).forEach((element) => { element.innerHTML = '<div class="practice-feedback"><strong>現在のコードは未判定です</strong><br>編集後のコードでもう一度実行してください。過去の合格履歴は保持されています。</div>'; });
     }
+    if (context?.activityId) {
+      saveExampleDebounced(context.activityId, { code: target.value, codeHash: codeFingerprint(target.value), changeChecked: false });
+      const feedback = document.querySelector(`[data-example-activity="${CSS.escape(context.activityId)}"] [data-example-change-feedback]`);
+      if (feedback && context.activityMode === "change") feedback.innerHTML = '<p class="help-text">現在のコードは未判定です。変更後のコードを実行してください。</p>';
+    }
+    return;
+  }
+  if (target.matches("[data-example-prediction]")) {
+    saveExampleDebounced(target.dataset.examplePrediction, { prediction: target.value, predictionChecked: false });
     return;
   }
   if (target.dataset.save === "prediction") {
@@ -1293,6 +1377,10 @@ function handleInput(event) {
 
 function handleChange(event) {
   const target = event.target;
+  if (target.matches("[data-example-reason]")) {
+    store.setExampleActivity(target.dataset.exampleReason, { reasonConfirmed: target.checked });
+    return;
+  }
   if (target.id === "practiceSessionFilter") {
     practiceFilters.session = target.value;
     renderPractice(parseHashRoute());
@@ -1400,6 +1488,16 @@ else renderRoute();
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
-    .then((registration) => registration.update())
+    .then((registration) => {
+      registration.update();
+      registration.addEventListener("updatefound", () => {
+        const worker = registration.installing;
+        worker?.addEventListener("statechange", () => {
+          if (worker.state === "installed" && navigator.serviceWorker.controller) toast("アプリの更新があります", "編集中のコードは自動保存済みです。必要なときに再読み込みしてください。", "info", 10000);
+        });
+      });
+    })
     .catch((error) => console.info("Service Worker registration skipped", error));
 }
+
+document.querySelector(".sidebar-version").textContent = `v${APP_VERSION} · build ${BUILD_ID} · 学習データはこの端末に保存`;
