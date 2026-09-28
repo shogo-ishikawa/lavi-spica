@@ -489,3 +489,41 @@ main { min-width: 0; }
   .post-study-section { padding: 14px 11px; }
   .trace-table { min-width: 640px; }
 }
+
+/* Lecture Companion and compact lesson views */
+.mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.mode-card .card-body { display: grid; gap: 12px; height: 100%; align-content: start; }
+.mode-card .button { width: fit-content; margin-top: auto; }
+.mode-card.featured { border-color: color-mix(in srgb, var(--primary) 55%, var(--border)); background: color-mix(in srgb, var(--primary) 7%, var(--surface)); }
+.lecture-session-card .card-body { display: grid; gap: 12px; height: 100%; }
+.lecture-session-card h2 { margin: 0; font-size: 1.08rem; }
+.lecture-status { display: grid; grid-template-columns: auto auto minmax(120px, 1fr); align-items: center; gap: 12px; padding: 13px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.lecture-columns { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; align-items: start; }
+.lecture-side { position: sticky; top: calc(var(--topbar-height) + 18px); margin-top: 34px; }
+.compact-lesson-link { display: block; padding: 9px 0; border-bottom: 1px solid var(--border); text-decoration: none; font-size: .84rem; }
+.reflection-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.reflection-card .card-body { position: relative; display: grid; gap: 12px; padding-left: 58px; }
+.question-number { position: absolute; left: 17px; top: 17px; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: var(--primary-ink); font-weight: 900; }
+.reflection-card details { border-top: 1px solid var(--border); padding-top: 9px; }
+.reflection-card summary { cursor: pointer; color: var(--primary-strong); font-weight: 750; }
+.reflection-card details p { margin-top: 8px; }
+.lecture-practice-list { display: grid; gap: 10px; }
+.lecture-practice-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.lecture-practice-row h3 { margin: 7px 0 3px; }
+.lecture-practice-row p { margin: 0; color: var(--text-muted); font-size: .84rem; }
+.optional-examples { padding: 20px; border: 1px dashed color-mix(in srgb, var(--accent) 55%, var(--border)); border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 4%, var(--surface)); }
+.optional-examples > p { color: var(--text-muted); }
+.example-link { margin-top: 12px; }
+.draft-notice { margin-top: 14px; color: var(--success); font-size: .78rem; }
+.lesson-layout[data-lesson-view="compact"] .long-explanation { display: none; }
+.lesson-layout[data-lesson-view="compact"] .practice-card { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); }
+@media (max-width: 900px) {
+  .lecture-columns { grid-template-columns: 1fr; }
+  .lecture-side { position: static; margin-top: 0; }
+}
+@media (max-width: 620px) {
+  .mode-grid, .reflection-grid { grid-template-columns: 1fr; }
+  .lecture-status { grid-template-columns: auto 1fr; }
+  .lecture-status .progress-track { grid-column: 1 / -1; }
+  .lecture-practice-row { align-items: stretch; flex-direction: column; }
+}

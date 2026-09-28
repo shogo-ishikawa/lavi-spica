@@ -10,6 +10,59 @@
 
 Pythonはブラウザ内で動くため、端末へのインストールは不要です。授業中の演習、欠席した回の補習、自宅での復習を同じ教材で進められます。
 
+
+## 講義補助モード
+
+トップページでは、従来どおり詳しい教材を順に読む「通常学習モード」と、Google Colab / notebookを中心にした授業後の「講義補助モード」を選べます。講義補助モードは、notebook、今日の要点、振り返りカード、必修practice（未着手／実行済み／合格済み）、任意の外部実例を各回の1画面へまとめます。詳しい自習用解説は通常モードに残っています。
+
+practiceのコードは問題IDごとにブラウザへ自動保存されます。同じ問題へ戻ると下書きが復元され、編集中に例題や別問題のコードを読み込む前には確認画面が表示されます。「開始コードへ戻す」はエディタの「初期化」から明示的に行います。
+
+lessonでは **Compact View / 詳しい解説を表示** を切り替えられます。Compact Viewは長い自習用解説を隠し、目標、実行エディタ、練習、ヒントへ集中する表示です。選択は同じブラウザへ保存されます。
+
+## 教員向け：講義構成を編集する
+
+講義補助モードの内容は [`js/lecture-plan.js`](js/lecture-plan.js) に集約しています。バックエンドやビルドは不要です。各回の設定項目は次のとおりです。
+
+| 項目 | 設定内容 |
+|---|---|
+| `sessionId` | 回を識別する一意の番号 |
+| `title` | 講義補助画面の回タイトル |
+| `notebookUrl` | 授業で使うColab notebookの共有URL |
+| `summaryBullets` | 今日の要点（3〜6個程度を推奨） |
+| `requiredLessonIds` | 詳しい復習先として表示するlesson ID |
+| `requiredPracticeIds` | 「今日の必修練習」に表示するpractice ID |
+| `reflectionCards` | `question`、任意の`hint`、折りたたむ`answer` |
+| `optionalExampleLinks` | 任意実例の`label`、`url`、`description` |
+| `optionalNotes` | その回の短い案内（空文字でも可） |
+
+```js
+{
+  sessionId: 1,
+  title: "変数・print・f-string",
+  notebookUrl: "https://colab.research.google.com/drive/共有ID",
+  summaryBullets: ["変数へ名前を付ける", "f-stringで結果を伝える"],
+  requiredLessonIds: ["01-variables", "02-print"],
+  requiredPracticeIds: ["01-p1", "02-p1"],
+  reflectionCards: [
+    { question: "変数を使う利点は？", hint: "読み手を意識します。", answer: "値の意味を名前で示せます。" },
+  ],
+  optionalExampleLinks: [
+    { label: "Compose As You Are", url: "https://example.edu/music", description: "Pythonを音へつなぐ例" },
+  ],
+  optionalNotes: "必修問題の後に任意実例を紹介します。",
+}
+```
+
+`notebookUrl`はColabの「共有」から学生が閲覧できるURLへ置き換えてください。lesson / practice IDは [`js/content.js`](js/content.js) の各`id`を使います。事後学習のコード問題には [`js/lesson-extensions.js`](js/lesson-extensions.js) のIDも指定できます。存在しないIDは検証でエラーになります。外部実例は本編へ埋め込まず、新しいタブで開きます。
+
+編集後は次の手順で `http://localhost:4173/#lecture` を確認します。
+
+```bash
+npm run check
+npm test
+npm run serve
+```
+
 ## 学べる内容
 
 | 学習段階 | 主な内容 |

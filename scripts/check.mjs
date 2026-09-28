@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { COURSE_CONTENT } from "../js/content.js";
 import { SELF_STUDY } from "../js/self-study.js";
 import { LESSON_EXPLANATIONS, POST_STUDY } from "../js/lesson-extensions.js";
+import { LECTURE_PLAN } from "../js/lecture-plan.js";
 import { validateParticipantProfile, validateStudentId, validateStudentName } from "../quiz/quiz-core.js";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -14,7 +15,7 @@ const assert = (condition, message) => { if (!condition) failures.push(message);
 const read = (path) => readFileSync(join(root, path), "utf8");
 
 const publicFiles = [
-  "index.html", "css/styles.css", "css/portal.css", "js/app.js", "js/content.js", "js/self-study.js",
+  "index.html", "css/styles.css", "css/portal.css", "js/app.js", "js/content.js", "js/lecture-plan.js", "js/self-study.js",
   "js/lesson-extensions.js", "js/runtime.js", "js/storage.js", "js/utils.js", "quiz/index.html", "quiz/quiz.js",
   "quiz/quiz-core.js", "workers/python-worker.mjs", "sw.js", "manifest.webmanifest", "assets/logo.svg",
   "assets/lavi-spica-hero.png", "data/experiment.csv", "data/experiment_missing.csv", "data/projectile.csv",
@@ -38,6 +39,16 @@ const lessonIds = COURSE_CONTENT.lessons.map((lesson) => lesson.id);
 assert(new Set(lessonIds).size === lessonIds.length, "lesson IDが重複しています");
 const regularPractices = COURSE_CONTENT.lessons.flatMap((lesson) => lesson.practices);
 assert(regularPractices.length === 46, `通常練習問題が46問ではありません: ${regularPractices.length}`);
+const allPracticeIds = new Set([...regularPractices.map((item) => item.id), ...Object.values(POST_STUDY).flat().filter((item) => item.kind === "code").map((item) => item.id)]);
+assert(LECTURE_PLAN.length === COURSE_CONTENT.sessions.length, "講義プランの回数がsession数と一致しません");
+for (const plan of LECTURE_PLAN) {
+  assert(Boolean(plan.notebookUrl), `講義notebook URLがありません: ${plan.sessionId}`);
+  assert(Array.isArray(plan.summaryBullets) && plan.summaryBullets.length >= 3, `講義の要点が不足しています: ${plan.sessionId}`);
+  assert(Array.isArray(plan.reflectionCards) && plan.reflectionCards.length >= 2, `振り返りカードが不足しています: ${plan.sessionId}`);
+  for (const id of plan.requiredLessonIds || []) assert(lessonIds.includes(id), `講義プランのlesson IDが不正です: ${id}`);
+  for (const id of plan.requiredPracticeIds || []) assert(allPracticeIds.has(id), `講義プランのpractice IDが不正です: ${id}`);
+}
+
 
 for (const lesson of COURSE_CONTENT.lessons) {
   const study = SELF_STUDY[lesson.id];
