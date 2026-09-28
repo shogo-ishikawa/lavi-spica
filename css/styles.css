@@ -527,3 +527,9 @@ main { min-width: 0; }
   .lecture-status .progress-track { grid-column: 1 / -1; }
   .lecture-practice-row { align-items: stretch; flex-direction: column; }
 }
+.topic-picker { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.65rem; margin:1rem 0; }
+.topic-picker label { border:1px solid var(--border); border-radius:10px; padding:.75rem; cursor:pointer; }
+.topic-review { border-top:2px solid var(--border); padding-top:2rem; }
+.application-guide { display:grid; grid-template-columns:minmax(7rem,auto) 1fr; gap:.45rem .8rem; }
+.application-guide dt { font-weight:700; }
+.application-guide dd { margin:0; }
