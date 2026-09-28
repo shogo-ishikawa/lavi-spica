@@ -3,7 +3,7 @@ export const COURSE_CONTENT = {
     "title": "LAVi-SPICA",
     "subtitle": "Structured Python Interactive Course and Activities",
     "tagline": "変数から可視化まで、書いて試せるPython基礎学習",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "audience": "プログラミングを初めて学ぶ大学生",
     "pyodide": "314.0.3"
   },
@@ -181,7 +181,7 @@ export const COURSE_CONTENT = {
       "practices": [
         {
           "id": "01-p1",
-          "title": "宇宙船の窓の面積",
+          "title": "長方形の面積",
           "prompt": "幅 w=3.2、高さ h=1.5 の長方形について、area を計算して表示しましょう。",
           "starterCode": "w = 3.2\nh = 1.5\n# areaを計算\n",
           "hints": [

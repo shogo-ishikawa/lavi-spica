@@ -132,6 +132,9 @@ export class CourseStore extends EventTarget {
         attempts: (previous.attempts || 0) + 1,
         passed: Boolean(previous.passed || record.passed),
         bestAt: record.passed ? record.at : previous.bestAt,
+        currentPassed: Boolean(record.passed),
+        currentCodeHash: record.codeHash || null,
+        exerciseVersion: record.exerciseVersion || null,
         history: [...(previous.history || []), record].slice(-20),
       };
     });

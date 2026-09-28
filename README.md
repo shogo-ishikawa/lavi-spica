@@ -13,55 +13,21 @@ Pythonはブラウザ内で動くため、端末へのインストールは不�
 
 ## 講義補助モード
 
-トップページでは、従来どおり詳しい教材を順に読む「通常学習モード」と、Google Colab / notebookを中心にした授業後の「講義補助モード」を選べます。講義補助モードは、notebook、今日の要点、振り返りカード、必修practice（未着手／実行済み／合格済み）、任意の外部実例を各回の1画面へまとめます。詳しい自習用解説は通常モードに残っています。
+講義補助モードでは、「区分」より細かいlesson ID単位のトピックを選び、**今日のまとめ → 知識確認 → 画面内コード演習と答え合わせ → 最後の確認 → 資料・任意応用例**の順で復習します。選択後のURLには`?topics=01-variables`のように範囲が入り、そのままClassroomへ共有できます。区分番号は授業日や全14回の回数を表しません。
 
-practiceのコードは問題IDごとにブラウザへ自動保存されます。同じ問題へ戻ると下書きが復元され、編集中に例題や別問題のコードを読み込む前には確認画面が表示されます。「開始コードへ戻す」はエディタの「初期化」から明示的に行います。
+コード問題はすべてpractice IDで共通管理され、学習コース、練習問題、講義補助モードのどこから開いても同じ問題文、開始コード、下書き、ヒント、解答例、採点条件を使います。コードを編集すると現在の判定は「未判定」に戻り、過去の合格履歴とは区別されます。
 
-lessonでは **Compact View / 詳しい解説を表示** を切り替えられます。Compact Viewは長い自習用解説を隠し、目標、実行エディタ、練習、ヒントへ集中する表示です。選択は同じブラウザへ保存されます。
+## 教員向け：資料・トピック・問題を編集する
 
-## 教員向け：講義構成を編集する
+- 資料本体は[`js/materials.js`](js/materials.js)へ`id`、`title`、`type`、`url`、`access`、`description`を登録します。URLの差し替えはここだけで行います。Colabの`access`は`enrolled`、公開PDFは`public`です。履修者限定ファイルをリポジトリへ複製しないでください。
+- [`js/lecture-plan.js`](js/lecture-plan.js)の各`topics`へ既存lesson IDと`materialRefs`を設定します。参照ごとの`coverage`には、その資料で確認する内容を書きます。PDFの節・ページを確認できない場合は推測せず、ファイル全体への参照にします。
+- 今日の範囲は講義補助画面のチェックボックスで選び、「選んだ範囲を表示」後に共有URLをコピーします。存在しないIDはエラー表示となり、全問題へ自動転送されません。
+- 問題は[`js/content.js`](js/content.js)または[`js/lesson-extensions.js`](js/lesson-extensions.js)へ一意のIDで追加します。`starterCode`、段階的な`hints`、`solution`、`check`、関連lessonを揃えます。採点条件が空なら合格ではなく未判定になります。
+- 応用例はトピックの`application`へ、実在する作例名、文法との関係、予想、変更箇所、観察結果、URL、画面内の開き方を設定します。未確認のdeep linkは作らず、外部例を必修条件にしません。
 
-講義補助モードの内容は [`js/lecture-plan.js`](js/lecture-plan.js) に集約しています。バックエンドやビルドは不要です。各回の設定項目は次のとおりです。
+ColabはGoogle Classroomの履修者にGoogle側で共有されます。SPICAは新しい認証を追加せず、一般利用者は公開教材と練習問題を引き続き利用できます。開けない場合もリンク切れや未履修とは断定しません。問題棚卸しは[`docs/EXERCISE-INVENTORY.md`](docs/EXERCISE-INVENTORY.md)を参照してください。
 
-| 項目 | 設定内容 |
-|---|---|
-| `sessionId` | 回を識別する一意の番号 |
-| `title` | 講義補助画面の回タイトル |
-| `notebookUrl` | 授業で使うColab notebookの共有URL |
-| `summaryBullets` | 今日の要点（3〜6個程度を推奨） |
-| `requiredLessonIds` | 詳しい復習先として表示するlesson ID |
-| `requiredPracticeIds` | 「今日の必修練習」に表示するpractice ID |
-| `reflectionCards` | `question`、任意の`hint`、折りたたむ`answer` |
-| `optionalExampleLinks` | 任意実例の`label`、`url`、`description` |
-| `optionalNotes` | その回の短い案内（空文字でも可） |
-
-```js
-{
-  sessionId: 1,
-  title: "変数・print・f-string",
-  notebookUrl: "https://colab.research.google.com/drive/共有ID",
-  summaryBullets: ["変数へ名前を付ける", "f-stringで結果を伝える"],
-  requiredLessonIds: ["01-variables", "02-print"],
-  requiredPracticeIds: ["01-p1", "02-p1"],
-  reflectionCards: [
-    { question: "変数を使う利点は？", hint: "読み手を意識します。", answer: "値の意味を名前で示せます。" },
-  ],
-  optionalExampleLinks: [
-    { label: "Compose As You Are", url: "https://example.edu/music", description: "Pythonを音へつなぐ例" },
-  ],
-  optionalNotes: "必修問題の後に任意実例を紹介します。",
-}
-```
-
-`notebookUrl`はColabの「共有」から学生が閲覧できるURLへ置き換えてください。lesson / practice IDは [`js/content.js`](js/content.js) の各`id`を使います。事後学習のコード問題には [`js/lesson-extensions.js`](js/lesson-extensions.js) のIDも指定できます。存在しないIDは検証でエラーになります。外部実例は本編へ埋め込まず、新しいタブで開きます。
-
-編集後は次の手順で `http://localhost:4173/#lecture` を確認します。
-
-```bash
-npm run check
-npm test
-npm run serve
-```
+編集後は`npm run check`と`npm test`を実行し、`http://localhost:4173/#lecture`で共有URL、戻る・進む、再読み込み、下書き復元を確認します。
 
 ## 学べる内容
 

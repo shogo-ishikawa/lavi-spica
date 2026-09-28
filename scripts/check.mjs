@@ -6,6 +6,7 @@ import { COURSE_CONTENT } from "../js/content.js";
 import { SELF_STUDY } from "../js/self-study.js";
 import { LESSON_EXPLANATIONS, POST_STUDY } from "../js/lesson-extensions.js";
 import { LECTURE_PLAN } from "../js/lecture-plan.js";
+import { MATERIALS } from "../js/materials.js";
 import { validateParticipantProfile, validateStudentId, validateStudentName } from "../quiz/quiz-core.js";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -15,7 +16,7 @@ const assert = (condition, message) => { if (!condition) failures.push(message);
 const read = (path) => readFileSync(join(root, path), "utf8");
 
 const publicFiles = [
-  "index.html", "css/styles.css", "css/portal.css", "js/app.js", "js/content.js", "js/lecture-plan.js", "js/self-study.js",
+  "index.html", "css/styles.css", "css/portal.css", "js/app.js", "js/content.js", "js/lecture-plan.js", "js/materials.js", "js/self-study.js",
   "js/lesson-extensions.js", "js/runtime.js", "js/storage.js", "js/utils.js", "quiz/index.html", "quiz/quiz.js",
   "quiz/quiz-core.js", "workers/python-worker.mjs", "sw.js", "manifest.webmanifest", "assets/logo.svg",
   "assets/lavi-spica-hero.png", "data/experiment.csv", "data/experiment_missing.csv", "data/projectile.csv",
@@ -26,7 +27,7 @@ const publicFiles = [
 for (const path of publicFiles) assert(existsSync(join(root, path)), `必須ファイルがありません: ${path}`);
 
 const version = read("VERSION").trim();
-assert(version === "1.5.0", `想定versionは1.5.0です: ${version}`);
+assert(version === "1.6.0", `想定versionは1.6.0です: ${version}`);
 assert(COURSE_CONTENT.meta.version === version, "COURSE_CONTENTとVERSIONが一致しません");
 assert(JSON.parse(read("package.json")).version === version, "package.jsonとVERSIONが一致しません");
 assert(JSON.parse(read("package-lock.json")).version === version, "package-lock.jsonとVERSIONが一致しません");
@@ -42,12 +43,18 @@ assert(regularPractices.length === 46, `通常練習問題が46問ではあり�
 const allPracticeIds = new Set([...regularPractices.map((item) => item.id), ...Object.values(POST_STUDY).flat().filter((item) => item.kind === "code").map((item) => item.id)]);
 assert(LECTURE_PLAN.length === COURSE_CONTENT.sessions.length, "講義プランの回数がsession数と一致しません");
 for (const plan of LECTURE_PLAN) {
-  assert(Boolean(plan.notebookUrl), `講義notebook URLがありません: ${plan.sessionId}`);
-  assert(Array.isArray(plan.summaryBullets) && plan.summaryBullets.length >= 3, `講義の要点が不足しています: ${plan.sessionId}`);
-  assert(Array.isArray(plan.reflectionCards) && plan.reflectionCards.length >= 2, `振り返りカードが不足しています: ${plan.sessionId}`);
-  for (const id of plan.requiredLessonIds || []) assert(lessonIds.includes(id), `講義プランのlesson IDが不正です: ${id}`);
-  for (const id of plan.requiredPracticeIds || []) assert(allPracticeIds.has(id), `講義プランのpractice IDが不正です: ${id}`);
+  assert(Array.isArray(plan.topics) && plan.topics.length, `講義トピックがありません: ${plan.sessionId}`);
+  for (const topic of plan.topics || []) {
+    assert(lessonIds.includes(topic.id), `講義プランのtopic IDが不正です: ${topic.id}`);
+    for (const ref of topic.materialRefs || []) assert(Boolean(MATERIALS[ref.materialId]) && Boolean(ref.coverage), `資料参照が不正です: ${topic.id}`);
+  }
 }
+assert(Object.keys(MATERIALS).length === 7, "講義資料はColab 4件、PDF 3件である必要があります");
+assert(Object.values(MATERIALS).filter(({ type }) => type === "colab").every(({ access }) => access === "enrolled"), "Colabは履修者限定である必要があります");
+assert(Object.values(MATERIALS).filter(({ type }) => type === "pdf").every(({ access }) => access === "public"), "PDFは一般公開である必要があります");
+assert(LECTURE_PLAN[2].topics.find(({ id }) => id === "08-math").materialRefs.some(({ materialId }) => materialId === "colab-basic-features"), "mathは2冊目に対応する必要があります");
+assert(LECTURE_PLAN[2].topics.find(({ id }) => id === "10-for").materialRefs.some(({ materialId }) => materialId === "colab-loop-branch"), "forは3冊目に対応する必要があります");
+assert(LECTURE_PLAN[4].topics.find(({ id }) => id === "14-def").materialRefs.some(({ materialId }) => materialId === "colab-functions"), "関数は4冊目に対応する必要があります");
 
 
 for (const lesson of COURSE_CONTENT.lessons) {

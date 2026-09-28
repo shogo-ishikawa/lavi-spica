@@ -2,6 +2,7 @@ import { COURSE_CONTENT } from "./content.js";
 import { SELF_STUDY } from "./self-study.js";
 import { LESSON_EXPLANATIONS, POST_STUDY } from "./lesson-extensions.js";
 import { LECTURE_PLAN } from "./lecture-plan.js";
+import { ENROLLED_NOTICE, MATERIALS } from "./materials.js";
 import { CourseStore } from "./storage.js";
 import { PythonRuntime } from "./runtime.js";
 import {
@@ -101,13 +102,16 @@ function trackBadge(lesson) {
 
 function practiceStatus(practiceId, snapshot = store.snapshot()) {
   const attempt = snapshot.practiceAttempts[practiceId];
-  if (attempt?.passed) return { label: "合格済み", className: "done" };
+  const draft = snapshot.practiceDrafts?.[practiceId];
+  if (attempt?.passed && draft != null && attempt.currentCodeHash !== codeFingerprint(draft)) return { label: "過去に合格・再確認が必要", className: "advanced" };
+  if (attempt?.currentPassed) return { label: "現在のコードは正解", className: "done" };
+  if (attempt?.passed) return { label: "過去に合格", className: "advanced" };
   if (attempt?.attempts) return { label: "実行済み", className: "advanced" };
   return { label: "未着手", className: "warning" };
 }
 
 function lectureProgress(plan, snapshot = store.snapshot()) {
-  const validIds = plan.requiredPracticeIds.filter((id) => PRACTICE_BY_ID.has(id));
+  const validIds = plan.topics.flatMap(({ id }) => LESSON_BY_ID.get(id)?.practices.map(({ id: practiceId }) => practiceId) || []).filter((id) => PRACTICE_BY_ID.has(id));
   const passed = validIds.filter((id) => snapshot.practiceAttempts[id]?.passed).length;
   const attempted = validIds.filter((id) => snapshot.practiceAttempts[id]?.attempts).length;
   return {
@@ -312,10 +316,26 @@ function renderLecturePractice(practiceId, snapshot) {
   const practice = PRACTICE_BY_ID.get(practiceId);
   if (!practice) return `<div class="info-strip danger"><span>!</span><div><strong>${escapeHTML(practiceId)}</strong> が見つかりません。lecture-plan.js のIDを確認してください。</div></div>`;
   const status = practiceStatus(practiceId, snapshot);
+  const draft = snapshot.practiceDrafts?.[practice.id] ?? practice.starterCode;
+  const editorId = `lecture-editor-${practice.id}`;
   return `<article class="lecture-practice-row">
     <div><span class="badge ${status.className}">${status.label}</span><h3>${escapeHTML(practice.title)}</h3><p>${escapeHTML(practice.prompt)}</p></div>
-    <a class="button primary small" href="#practice?item=${encodeURIComponent(practice.id)}">この問題を始める</a>
+    <div class="button-row"><button class="button ghost small" type="button" data-action="show-hints" data-practice="${escapeAttribute(practice.id)}">段階的なヒント</button><button class="button ghost small" type="button" data-action="show-solution" data-practice="${escapeAttribute(practice.id)}">解答・解説</button><a class="button ghost small" href="#learn/${escapeAttribute(practice.lesson.id)}">関連する学習コース</a></div>
+    ${registerEditor(editorId, draft, `${practice.id} · ${practice.title}`, { kind: "practice", practiceId: practice.id, lessonId: practice.lesson.id, defaultCode: practice.starterCode, filename: `${practice.id}.py` })}
+    <div data-practice-feedback="${escapeAttribute(practice.id)}"></div>
   </article>`;
+}
+
+function renderMaterialRef(ref) {
+  const material = MATERIALS[ref.materialId];
+  if (!material) return `<div class="info-strip danger"><span>!</span><div>資料ID ${escapeHTML(ref.materialId)} が見つかりません。</div></div>`;
+  const badge = material.access === "enrolled" ? "履修者限定" : "一般公開・PDF";
+  return `<article class="card"><div class="card-body"><div class="tag-list"><span class="badge ${material.access === "enrolled" ? "warning" : "done"}">${badge}</span><span class="tag">${escapeHTML(material.type.toUpperCase())}</span></div><h3>${escapeHTML(material.title)}</h3><p>${escapeHTML(ref.coverage)}</p><p class="help-text">${escapeHTML(material.description)}</p>${material.access === "enrolled" ? `<div class="info-strip warning"><span>!</span><div>${escapeHTML(ENROLLED_NOTICE)}</div></div>` : ""}<a class="button secondary small" href="${escapeAttribute(material.url)}" target="_blank" rel="noopener noreferrer">資料を新しいタブで開く ↗</a></div></article>`;
+}
+
+function renderApplication(example, topicId) {
+  if (!example) return "";
+  return `<article class="card"><div class="card-body"><div class="eyebrow">任意の応用例 · ${escapeHTML(topicId)}</div><h3>${escapeHTML(example.app)}：${escapeHTML(example.lesson)}</h3><dl class="application-guide"><dt>学んだ文法との関係</dt><dd>${escapeHTML(example.relation)}</dd><dt>実行前の予想</dt><dd>${escapeHTML(example.prediction)}</dd><dt>変更する箇所</dt><dd>${escapeHTML(example.change)}</dd><dt>観察する結果</dt><dd>${escapeHTML(example.observe)}</dd><dt>開き方</dt><dd>${escapeHTML(example.steps)}</dd></dl><a class="button secondary small" href="${escapeAttribute(example.url)}" target="_blank" rel="noopener noreferrer">アプリを開く ↗</a><p class="help-text">外部アプリを開くことは必修問題の完了条件ではありません。アプリ固有の音声・描画機能はPython標準機能ではありません。</p></div></article>`;
 }
 
 function renderLectureIndex() {
@@ -330,30 +350,26 @@ function renderLectureIndex() {
           <div class="session-card-header"><span class="session-number">${plan.sessionId}</span><span class="badge ${progress.className}">${progress.label}</span></div>
           <h2>${escapeHTML(plan.title)}</h2><p>${progress.passed} / ${progress.total} 問合格</p>
           <div class="progress-track"><span style="width:${Math.round(progress.passed / Math.max(1, progress.total) * 100)}%"></span></div>
-          <div class="button-row"><a class="button primary small" href="#lecture/${plan.sessionId}">振り返り・練習</a><a class="button ghost small" href="${escapeAttribute(plan.notebookUrl)}" target="_blank" rel="noopener noreferrer">notebookを開く ↗</a></div>
+          <p>${plan.topics.length}トピックから、今日扱った範囲だけを選べます。</p><div class="button-row"><a class="button primary small" href="#lecture/${plan.sessionId}">トピックを選ぶ</a></div>
         </div></article>`;
       }).join("")}
     </div></section>`;
 }
 
-function renderLectureSession(plan) {
+function renderLectureSession(plan, route) {
   const snapshot = store.snapshot();
   const progress = lectureProgress(plan, snapshot);
-  const lessons = plan.requiredLessonIds.map((id) => LESSON_BY_ID.get(id)).filter(Boolean);
+  const requested = (route.params.get("topics") || "").split(",").filter(Boolean);
+  const topicIds = new Set(plan.topics.map(({ id }) => id));
+  const invalid = requested.filter((id) => !topicIds.has(id));
+  const selected = requested.length ? plan.topics.filter(({ id }) => requested.includes(id)) : plan.topics;
+  const shareHash = `#lecture/${plan.sessionId}?topics=${selected.map(({ id }) => encodeURIComponent(id)).join(",")}`;
   appView.innerHTML = `
-    ${pageHeader({ eyebrow: `LECTURE COMPANION · SESSION ${plan.sessionId}`, title: `第${plan.sessionId}回 ${plan.title}`, description: plan.optionalNotes || "notebookの説明を思い出し、必修練習へ進みましょう。", breadcrumb: '<a href="#lecture">講義補助モード</a><span>›</span><span>今回の振り返り</span>', actions: `<a class="button primary" href="${escapeAttribute(plan.notebookUrl)}" target="_blank" rel="noopener noreferrer">notebookを開く ↗</a>` })}
+    ${pageHeader({ eyebrow: `LECTURE COMPANION · 区分 ${plan.sessionId}`, title: plan.title, description: "区分番号は実際の授業日や全14回の回数とは別です。今日扱ったトピックだけを選んで復習できます。", breadcrumb: '<a href="#lecture">講義補助モード</a><span>›</span><span>今日の復習</span>', actions: `<button class="button secondary" type="button" data-action="copy-topic-url" data-url="${escapeAttribute(shareHash)}">選択範囲のURLをコピー</button>` })}
+    ${invalid.length ? `<div class="info-strip danger"><span>!</span><div><strong>指定されたトピックが見つかりません。</strong><br>${invalid.map(escapeHTML).join("、")}。無関係な問題へは切り替えていません。下から有効なトピックを選んでください。</div></div>` : ""}
+    <section class="card section"><div class="card-body"><h2>今日学んだトピックを選ぶ</h2><p>複数選択できます。選択状態を含むURLをClassroomなどで共有できます。</p><div class="topic-picker">${plan.topics.map(({ id }) => { const lesson = LESSON_BY_ID.get(id); return `<label><input type="checkbox" data-topic-choice value="${escapeAttribute(id)}" ${selected.some((item) => item.id === id) ? "checked" : ""}> ${escapeHTML(lesson?.title || id)}</label>`; }).join("")}</div><button class="button primary small" type="button" data-action="apply-topics" data-session="${plan.sessionId}">選んだ範囲を表示</button></div></section>
     <div class="lecture-status"><span class="badge ${progress.className}">${progress.label}</span><strong>${progress.passed} / ${progress.total} 問合格</strong><div class="progress-track"><span style="width:${Math.round(progress.passed / Math.max(1, progress.total) * 100)}%"></span></div></div>
-    <div class="lecture-columns">
-      <main>
-        <section class="section card"><div class="card-body"><div class="eyebrow">TODAY'S POINTS</div><h2>今日の要点</h2><ul class="objective-list">${plan.summaryBullets.map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul></div></section>
-        <section class="section"><div class="section-heading"><div><h2>振り返りカード</h2><p>まず自分の言葉で答えてから、考え方・答えを開きます。</p></div></div><div class="reflection-grid">
-          ${plan.reflectionCards.map((card, index) => `<article class="card reflection-card"><div class="card-body"><span class="question-number">${index + 1}</span><h3>${escapeHTML(card.question)}</h3>${card.hint ? `<details><summary>ヒント</summary><p>${escapeHTML(card.hint)}</p></details>` : ""}<details><summary>考え方・答えを確認</summary><p>${escapeHTML(card.answer)}</p></details></div></article>`).join("")}
-        </div></section>
-        <section class="section"><div class="section-heading"><div><h2>今日の必修練習</h2><p>必要な問題だけを表示しています。ボタンから保存済みの続きへ移動できます。</p></div></div><div class="lecture-practice-list">${plan.requiredPracticeIds.map((id) => renderLecturePractice(id, snapshot)).join("")}</div></section>
-        ${plan.optionalExampleLinks.length ? `<section class="section optional-examples"><div class="eyebrow">OPTIONAL</div><h2>実例として見てみよう</h2><p>本編の必修課題ではありません。Pythonが音楽やアートで実際に動く例です。</p><div class="card-grid">${plan.optionalExampleLinks.map((link) => `<a class="card card-link example-link" href="${escapeAttribute(link.url)}" target="_blank" rel="noopener noreferrer"><div class="card-body"><h3>${escapeHTML(link.label)} ↗</h3><p>${escapeHTML(link.description)}</p></div></a>`).join("")}</div></section>` : ""}
-      </main>
-      <aside class="lecture-side card"><div class="card-body"><div class="eyebrow">REVIEW</div><h2>詳しく見直す</h2><p>長い概念解説はここでは省略しています。必要なlessonだけ通常モードで開けます。</p><div class="lesson-list">${lessons.map((lesson) => `<a href="#learn/${escapeAttribute(lesson.id)}" class="compact-lesson-link">${escapeHTML(lesson.title)} →</a>`).join("")}</div></div></aside>
-    </div>`;
+    ${selected.map((topicConfig) => { const lesson = LESSON_BY_ID.get(topicConfig.id); const knowledge = (POST_STUDY[topicConfig.id] || []).filter(({ kind }) => kind === "knowledge").slice(0, 2); return lesson ? `<section class="section topic-review"><div class="eyebrow">TOPIC · ${escapeHTML(topicConfig.id)}</div><h2>${escapeHTML(lesson.title)}</h2><section class="card"><div class="card-body"><h3>① 今日のまとめ</h3><ul class="objective-list">${lesson.objectives.slice(0, 5).map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul></div></section><section><h3>② 思い出してみよう</h3><div class="reflection-grid">${knowledge.map((card) => `<article class="card reflection-card"><div class="card-body"><h4>${escapeHTML(card.title)}</h4><p>${escapeHTML(card.prompt)}</p><details><summary>ヒント</summary><p>${escapeHTML(card.hint)}</p></details><details><summary>自己確認用の解答例</summary><p>${escapeHTML(card.answer)}</p></details></div></article>`).join("")}</div></section><section><h3>③ 自分で書いて確かめよう</h3><p>入力、実行、答え合わせ、ヒント、解説をこの画面で利用できます。</p><div class="lecture-practice-list">${lesson.practices.map(({ id }) => renderLecturePractice(id, snapshot)).join("")}</div></section><section class="card"><div class="card-body"><h3>④ 最後の確認</h3><p>${escapeHTML(lesson.predictPrompt)}</p><p class="help-text">値や入力を1つ変え、結果を予想してから再実行してください。変更後のコードは再度答え合わせが必要です。</p></div></section><section><h3>⑤ 必要な人向けのリンク</h3><p><a class="button ghost small" href="#learn/${escapeAttribute(lesson.id)}">対応する学習コース</a></p><div class="card-grid">${topicConfig.materialRefs.map(renderMaterialRef).join("")}${renderApplication(topicConfig.application, topicConfig.id)}</div></section></section>` : ""; }).join("")}`;
 }
 
 function renderLecture(route) {
@@ -361,7 +377,7 @@ function renderLecture(route) {
   if (!sessionId) return renderLectureIndex();
   const plan = LECTURE_PLAN.find((item) => Number(item.sessionId) === sessionId);
   if (!plan) return renderNotFound();
-  renderLectureSession(plan);
+  renderLectureSession(plan, route);
 }
 
 function lessonRow(lesson, snapshot) {
@@ -959,9 +975,20 @@ function normalizeOutput(value) {
   return String(value ?? "").replace(/\r\n/g, "\n").trim();
 }
 
+function codeFingerprint(code) {
+  let hash = 2166136261;
+  for (const character of String(code)) { hash ^= character.charCodeAt(0); hash = Math.imul(hash, 16777619); }
+  return (hash >>> 0).toString(16);
+}
+
+function executableSource(code) {
+  return String(code).replace(/#[^\n]*/g, "").replace(/(?:'''[\s\S]*?'''|\"\"\"[\s\S]*?\"\"\"|'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\")/g, "");
+}
+
 function evaluatePractice(practice, code, result) {
   if (result.error) return { passed: false, message: "Pythonエラーを解消してから、出力と条件を確認します。" };
   const check = practice.check || {};
+  if (!Object.keys(check).length) return { passed: false, message: "この問題の採点条件が未設定のため、未判定です。解答例と確認観点で自己確認してください。", state: "unavailable" };
   const stdout = normalizeOutput(result.stdout);
   const reasons = [];
 
@@ -981,8 +1008,10 @@ function evaluatePractice(practice, code, result) {
       reasons.push(`最後の数値出力が期待値 ${check.numericOutput} と一致していません。`);
     }
   }
+  const source = executableSource(code);
   for (const required of check.required || []) {
-    if (!code.includes(required)) reasons.push(`コードに必要な要素「${required}」が見つかりません。`);
+    const pattern = /^[A-Za-z_]\w*$/.test(required) ? new RegExp(`\\b${required}\\b`) : null;
+    if (!(pattern ? pattern.test(source) : code.includes(required))) reasons.push(`実行するコードに必要な要素「${required}」が見つかりません（コメントや文字列に書くだけでは条件を満たしません）。`);
   }
   for (const forbidden of check.forbidden || []) {
     if (code.includes(forbidden)) reasons.push(`この問題では「${forbidden}」を使わずに修正してください。`);
@@ -1011,6 +1040,8 @@ async function runEditor(editorId) {
           passed: evaluation.passed,
           stdout: normalizeOutput(result.stdout).slice(0, 2000),
           error: result.error ? stripAnsi(result.error).slice(0, 2000) : "",
+          codeHash: codeFingerprint(code),
+          exerciseVersion: APP_VERSION,
         });
         updatePracticeFeedback(practice.id, evaluation);
       }
@@ -1086,6 +1117,17 @@ async function handleClick(event) {
   const target = event.target.closest("[data-action]");
   if (!target) return;
   const action = target.dataset.action;
+  if (action === "apply-topics") {
+    const ids = [...document.querySelectorAll("[data-topic-choice]:checked")].map((input) => input.value);
+    if (!ids.length) { toast("トピックを1つ以上選んでください", "未選択のまま全問題へ切り替えることはありません。", "error"); return; }
+    location.hash = `lecture/${target.dataset.session}?topics=${ids.map(encodeURIComponent).join(",")}`;
+    return;
+  }
+  if (action === "copy-topic-url") {
+    await copyText(`${location.href.split("#")[0]}${target.dataset.url}`);
+    toast("共有URLをコピーしました", "このURLでは同じトピック範囲が開きます。", "success");
+    return;
+  }
   const editorId = target.dataset.editor;
 
   if (action === "run-code") {
@@ -1215,6 +1257,9 @@ function handleInput(event) {
     const context = editorContexts.get(editorId);
     if (context?.kind === "lesson" && context.lessonId && !context.practiceId) saveDraftDebounced(context.lessonId, target.value);
     if (context?.practiceId) savePracticeDraftDebounced(context.practiceId, target.value);
+    if (context?.practiceId) {
+      document.querySelectorAll(`[data-practice-feedback="${CSS.escape(context.practiceId)}"]`).forEach((element) => { element.innerHTML = '<div class="practice-feedback"><strong>現在のコードは未判定です</strong><br>編集後のコードでもう一度実行してください。過去の合格履歴は保持されています。</div>'; });
+    }
     return;
   }
   if (target.dataset.save === "prediction") {
